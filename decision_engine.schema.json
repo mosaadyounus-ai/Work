@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://omega.dev/schema/decision_engine.schema.json",
+  "title": "DecisionEngine",
+  "description": "Schema for dominant region lookup, M-surface evaluation, winner-map queries, and kink-line interpolation.",
+  "type": "object",
+  "required": ["version", "regions", "winner_map", "kink_lines"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema or decision engine version."
+    },
+    "regions": {
+      "type": "array",
+      "description": "List of dominant regions with boundaries and properties.",
+      "items": {
+        "type": "object",
+        "required": ["region_id", "boundaries", "properties"],
+        "properties": {
+          "region_id": { "type": "integer" },
+          "boundaries": {
+            "type": "array",
+            "items": { "type": "number" },
+            "minItems": 2
+          },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "dominant": { "type": "boolean" },
+              "envelope_value": { "type": "number" }
+            },
+            "required": ["dominant", "envelope_value"]
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "winner_map": {
+      "type": "object",
+      "description": "Winner map queries for region lookup.",
+      "patternProperties": {
+        "^region_\\d+$": {
+          "type": "object",
+          "properties": {
+            "winner": { "type": "string" },
+            "score": { "type": "number" }
+          },
+          "required": ["winner", "score"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "kink_lines": {
+      "type": "array",
+      "description": "Kink-line interpolation data.",
+      "items": {
+        "type": "object",
+        "required": ["line_id", "points"],
+        "properties": {
+          "line_id": { "type": "integer" },
+          "points": {
+            "type": "array",
+            "items": { "type": "number" },
+            "minItems": 2
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,128 @@
+{
+  "schema_version": "1.0.0",
+  "source_model": "ConversionFront",
+  "generation_method": "trace_first",
+  "timestamp": "2026-04-19T17:24:00Z",
+  "embedding": {
+    "type": "Embed3D",
+    "description": "Maps state to (phi, r, e) for envelope evaluation",
+    "coordinates": ["phi", "r", "e"]
+  },
+  "envelope": {
+    "parameters": {
+      "C_phi": 0,
+      "C_r": 0.25,
+      "M": 4
+    },
+    "functional": "M = e + C_phi*phi + C_r*r",
+    "half_space": "e + C_phi*phi + C_r*r <= M"
+  },
+  "peaks": [
+    {
+      "peak_id": "P1",
+      "cluster_id": "A",
+      "coordinates": {
+        "phi": 4,
+        "r": 2,
+        "e": 4
+      },
+      "envelope_value": 4.5,
+      "facet_assignment": "Facet-A",
+      "facet_label": "High-phi, low-r peak",
+      "dominance_condition": "C_r < (1 + C_phi)/4",
+      "discovery_context": {
+        "trace_file": "trace_A_rerun.txt",
+        "config_file": "Kink_A.cfg",
+        "C_phi": 0,
+        "C_r": 0.25,
+        "M_pred": 4,
+        "violation_step": 6,
+        "mode_at_violation": "FUSION"
+      }
+    },
+    {
+      "peak_id": "P2",
+      "cluster_id": "B",
+      "coordinates": {
+        "phi": 3,
+        "r": 6,
+        "e": 3
+      },
+      "envelope_value": 4.5,
+      "facet_assignment": "Facet-B",
+      "facet_label": "Low-phi, high-r peak",
+      "dominance_condition": "C_r > (1 + C_phi)/4",
+      "discovery_context": {
+        "trace_file": "trace_B_rerun.txt",
+        "config_file": "Kink_B.cfg",
+        "C_phi": 0,
+        "C_r": 0.3,
+        "M_pred": 5,
+        "violation_step": 9,
+        "mode_at_violation": "FUSION"
+      }
+    }
+  ],
+  "facets": [
+    {
+      "facet_id": "Facet-A",
+      "peak_id": "P1",
+      "label": "High-phi, low-r peak",
+      "mode_guard": "BUILD_COMPRESS",
+      "normal": [4, 2, 1],
+      "offset": 4,
+      "plane_equation": "M = 4 + 4*C_phi + 2*C_r",
+      "dominance_region": {
+        "C_r_max": 0.25
+      }
+    },
+    {
+      "facet_id": "Facet-B",
+      "peak_id": "P2",
+      "label": "Low-phi, high-r peak",
+      "mode_guard": "BUILD_COMPRESS",
+      "normal": [3, 6, 1],
+      "offset": 3,
+      "plane_equation": "M = 3 + 3*C_phi + 6*C_r",
+      "dominance_region": {
+        "C_r_min": 0.25
+      }
+    }
+  ],
+  "adjacency": [
+    {
+      "edge_id": "E1",
+      "vertices": ["Facet-A", "Facet-B"],
+      "kink_equation": {
+        "formula": "C_r = (1 + C_phi) / 4",
+        "solved_for": "C_r",
+        "slope": 0.25,
+        "intercept": 0.25,
+        "domain": {
+          "C_phi_min": 0,
+          "C_phi_max": 10
+        }
+      },
+      "verified_by": [
+        {
+          "trace_file": "trace_A_rerun.txt",
+          "dominant_peak": "A",
+          "C_r": 0.2
+        },
+        {
+          "trace_file": "trace_B_rerun.txt",
+          "dominant_peak": "B",
+          "C_r": 0.3
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "polyhedron_schema": "schemas/polyhedron.schema.json",
+    "facet_report_schema": "schemas/facet_report.schema.json",
+    "validators_passed": [
+      "validate_polyhedron.py",
+      "validate_facet_report.py"
+    ]
+  }
+}

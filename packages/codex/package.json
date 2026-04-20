@@ -1,0 +1,20 @@
+{
+  "name": "@omega-lattice/codex",
+  "version": "1.0.0",
+  "description": "Nonogram Codex - Sealed nine-plate recursive operator engine",
+  "main": "index.js",
+  "types": "index.ts",
+  "scripts": {
+    "test": "node --test",
+    "lint": "eslint ."
+  },
+  "keywords": [
+    "codex",
+    "operator",
+    "lattice",
+    "deterministic",
+    "sealed"
+  ],
+  "author": "Mohammad Saad Younus",
+  "license": "MIT"
+}

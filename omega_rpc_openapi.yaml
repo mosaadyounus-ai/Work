@@ -1,0 +1,124 @@
+# Omega-ready RPC interface (OpenAPI 3.0)
+openapi: 3.0.0
+info:
+  title: Omega Geometry Governance API
+  version: 1.0.0
+  description: |
+    Typed API for submitting facet reports, retrieving envelopes, validating geometry, and diffing artifacts.
+servers:
+  - url: /api
+paths:
+  /submit-facet-report:
+    post:
+      summary: Submit a facet report for validation and processing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FacetReport'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+  /get-envelope:
+    get:
+      summary: Retrieve the current envelope
+      responses:
+        '200':
+          description: Envelope artifact
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+  /validate-artifact:
+    post:
+      summary: Validate a geometry artifact (facet, polyhedron, envelope)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArtifactValidationRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResult'
+  /diff-artifacts:
+    post:
+      summary: Diff two geometry artifacts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArtifactDiffRequest'
+      responses:
+        '200':
+          description: Diff result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtifactDiffResult'
+components:
+  schemas:
+    FacetReport:
+      type: object
+      description: Contract-grade facet report
+      properties:
+        version:
+          type: string
+        facets:
+          type: array
+          items:
+            type: object
+    Envelope:
+      type: object
+      description: Final M-surface envelope
+      properties:
+        version:
+          type: string
+        dominant_regions:
+          type: array
+          items:
+            type: object
+    ValidationResult:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            type: string
+    ArtifactValidationRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [facet, polyhedron, envelope]
+        artifact:
+          type: object
+    ArtifactDiffRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [facet, polyhedron, envelope]
+        artifact1:
+          type: object
+        artifact2:
+          type: object
+    ArtifactDiffResult:
+      type: object
+      properties:
+        differences:
+          type: array
+          items:
+            type: string

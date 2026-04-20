@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://omega.dev/schema/envelope.schema.json",
+  "title": "Envelope",
+  "description": "Typed contract for the final M-surface envelope, including dominant regions, kink partitions, and envelope coefficients.",
+  "type": "object",
+  "required": ["version", "dominant_regions", "kink_partitions", "envelope_coefficients"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema or envelope version."
+    },
+    "dominant_regions": {
+      "type": "array",
+      "description": "List of dominant regions, each as an object with region id and boundaries.",
+      "items": {
+        "type": "object",
+        "required": ["region_id", "boundaries"],
+        "properties": {
+          "region_id": { "type": "integer" },
+          "boundaries": {
+            "type": "array",
+            "description": "Boundary points or indices defining the region.",
+            "items": { "type": "number" },
+            "minItems": 2
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Optional region-level metadata.",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "kink_partitions": {
+      "type": "array",
+      "description": "List of kink lines or partitions, each as an array of points or indices.",
+      "items": {
+        "type": "array",
+        "minItems": 2,
+        "items": { "type": "number" }
+      }
+    },
+    "envelope_coefficients": {
+      "type": "object",
+      "description": "Coefficients for the envelope surface (e.g., polynomial or plane coefficients).",
+      "properties": {
+        "C_phi": { "type": "number" },
+        "C_r": { "type": "number" },
+        "e": { "type": "number" }
+      },
+      "required": ["C_phi", "C_r", "e"],
+      "additionalProperties": false
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional envelope-level metadata.",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

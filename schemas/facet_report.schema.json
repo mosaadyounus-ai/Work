@@ -1,0 +1,242 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://omega.local/schemas/facet_report/v1.0.0.schema.json",
+  "title": "Facet Discovery Report",
+  "description": "Raw output from TLC trace/sweep analysis. Precursor to polyhedral envelope. Contains discovered peaks, supporting planes, adjacency candidates, and solver metadata.",
+  "type": "object",
+  "required": ["schema_version", "metadata", "parameters", "discovered_peaks", "supporting_planes", "adjacency_candidates"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Schema version for facet report format"
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["generation_method", "timestamp", "source_traces", "solver_info"],
+      "properties": {
+        "generation_method": {
+          "type": "string",
+          "enum": ["trace_first", "sweep_first", "hybrid", "manual"],
+          "description": "How this report was generated"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "source_traces": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of trace files or sweep directories used"
+        },
+        "solver_info": {
+          "type": "object",
+          "required": ["name", "version"],
+          "properties": {
+            "name": { "type": "string" },
+            "version": { "type": "string" },
+            "parameters": { "type": "object" }
+          }
+        },
+        "peak_count": { "type": "integer", "minimum": 1 },
+        "plane_count": { "type": "integer", "minimum": 1 },
+        "adjacency_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "parameters": {
+      "type": "object",
+      "description": "Model parameters used for discovery",
+      "required": ["K", "PhiF", "RF", "C_phi", "C_r_range", "M_pred_range"],
+      "properties": {
+        "K": { "type": "integer", "minimum": 1 },
+        "PhiF": { "type": "integer", "minimum": 0 },
+        "RF": { "type": "integer", "minimum": 0 },
+        "C_phi": { "type": "number" },
+        "C_r_range": {
+          "type": "object",
+          "required": ["min", "max", "step"],
+          "properties": {
+            "min": { "type": "number" },
+            "max": { "type": "number" },
+            "step": { "type": "number" }
+          }
+        },
+        "M_pred_range": {
+          "type": "object",
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "number" },
+            "max": { "type": "number" }
+          }
+        }
+      }
+    },
+    "discovered_peaks": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Raw peaks extracted from TLC traces",
+      "items": {
+        "type": "object",
+        "required": ["peak_id", "coordinates", "envelope_value", "discovery_context"],
+        "properties": {
+          "peak_id": {
+            "type": "string",
+            "pattern": "^P[0-9]+$",
+            "description": "Unique peak identifier"
+          },
+          "coordinates": {
+            "type": "object",
+            "required": ["phi", "r", "e"],
+            "properties": {
+              "phi": { "type": "integer", "minimum": 0 },
+              "r": { "type": "integer", "minimum": 0 },
+              "e": { "type": "integer", "minimum": 0 }
+            }
+          },
+          "envelope_value": {
+            "type": "number",
+            "description": "W = e + C_phi*phi + C_r*r at discovery weights"
+          },
+          "discovery_context": {
+            "type": "object",
+            "required": ["C_r", "M_pred", "trace_file"],
+            "properties": {
+              "C_r": { "type": "number" },
+              "M_pred": { "type": "number" },
+              "trace_file": { "type": "string" },
+              "violation_step": { "type": "integer" },
+              "mode_at_violation": {
+                "type": "string",
+                "enum": ["FUSION", "BUILD_COMPRESS", "COLLAPSE"]
+              }
+            }
+          },
+          "cluster_assignment": {
+            "type": "string",
+            "description": "Assigned cluster after reconstruction (A, B, C...)"
+          }
+        }
+      }
+    },
+    "supporting_planes": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Candidate supporting planes from each peak",
+      "items": {
+        "type": "object",
+        "required": ["plane_id", "peak_id", "equation", "validity"],
+        "properties": {
+          "plane_id": {
+            "type": "string",
+            "pattern": "^PL[0-9]+$"
+          },
+          "peak_id": { "type": "string" },
+          "equation": {
+            "type": "object",
+            "required": ["phi_coeff", "r_coeff", "constant"],
+            "properties": {
+              "phi_coeff": { "type": "number" },
+              "r_coeff": { "type": "number" },
+              "constant": { "type": "number" },
+              "latex": { "type": "string" }
+            }
+          },
+          "validity": {
+            "type": "object",
+            "required": ["is_supporting", "dominance_region"],
+            "properties": {
+              "is_supporting": {
+                "type": "boolean",
+                "description": "True if this plane is part of upper hull"
+              },
+              "dominance_region": {
+                "type": "object",
+                "properties": {
+                  "C_r_min": { "type": "number" },
+                  "C_r_max": { "type": "number" }
+                }
+              },
+              "violated_by": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Other peaks that exceed this plane"
+              }
+            }
+          }
+        }
+      }
+    },
+    "adjacency_candidates": {
+      "type": "array",
+      "description": "Pairs of planes that meet at potential kinks",
+      "items": {
+        "type": "object",
+        "required": ["candidate_id", "plane_1", "plane_2", "intersection"],
+        "properties": {
+          "candidate_id": {
+            "type": "string",
+            "pattern": "^E[0-9]+$"
+          },
+          "plane_1": { "type": "string" },
+          "plane_2": { "type": "string" },
+          "intersection": {
+            "type": "object",
+            "required": ["kink_equation", "validity"],
+            "properties": {
+              "kink_equation": {
+                "type": "object",
+                "required": ["formula", "solved_for", "slope", "intercept"],
+                "properties": {
+                  "formula": { "type": "string" },
+                  "solved_for": { "enum": ["C_r", "C_phi"] },
+                  "slope": { "type": "number" },
+                  "intercept": { "type": "number" },
+                  "domain": {
+                    "type": "object",
+                    "properties": {
+                      "C_phi_min": { "type": "number" },
+                      "C_phi_max": { "type": "number" }
+                    }
+                  }
+                }
+              },
+              "validity": {
+                "type": "object",
+                "required": ["is_real_edge", "verification_method"],
+                "properties": {
+                  "is_real_edge": {
+                    "type": "boolean",
+                    "description": "True if intersection is on upper hull"
+                  },
+                  "verification_method": {
+                    "type": "string",
+                    "enum": ["analytic", "numeric", "tlc_cross_check"]
+                  },
+                  "verified_at": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "C_r": { "type": "number" },
+                        "dominant_peak": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "solver_metadata": {
+      "type": "object",
+      "properties": {
+        "clustering_algorithm": { "type": "string" },
+        "distance_metric": { "type": "string" },
+        "tolerance": { "type": "number" },
+        "convergence_criteria": { "type": "string" }
+      }
+    }
+  }
+}

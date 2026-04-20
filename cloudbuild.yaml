@@ -1,0 +1,47 @@
+steps:
+  # Step 1: Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-f'
+      - 'apps/server/Dockerfile'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/omega-server:$SHORT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/omega-server:latest'
+      - '.'
+
+  # Step 2: Push the image to GCR
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/omega-server:$SHORT_SHA'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/omega-server:latest'
+
+  # Step 3: Deploy to Cloud Run
+  - name: 'gcr.io/cloud-builders/gke-deploy'
+    args:
+      - run
+      - '--filename=apps/server/cloudrun-service.yaml'
+      - '--image=gcr.io/$PROJECT_ID/omega-server:$SHORT_SHA'
+      - '--location=us-west1'
+
+# Images to be pushed to the registry
+images:
+  - 'gcr.io/$PROJECT_ID/omega-server:$SHORT_SHA'
+  - 'gcr.io/$PROJECT_ID/omega-server:latest'
+
+# Service account (defaults to Cloud Build service account)
+serviceAccount: 'projects/$PROJECT_ID/serviceAccounts/cloud-builds@cloudbuild.gserviceaccount.com'
+
+# Build options
+options:
+  machineType: 'N1_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+
+# Substitution variables
+substitutionOption: 'ALLOW_LOOSE'

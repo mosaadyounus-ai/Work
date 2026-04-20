@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://omega.dev/schema/polyhedron.schema.json",
+  "title": "Polyhedron",
+  "description": "A contract-grade, versioned, convex polyhedral envelope for Omega.",
+  "type": "object",
+  "required": ["version", "vertices", "facets", "adjacency", "kinks"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema or envelope version."
+    },
+    "vertices": {
+      "type": "array",
+      "description": "List of vertices as [x, y] or [x, y, z] arrays.",
+      "minItems": 1,
+      "items": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 3,
+        "items": { "type": "number" }
+      }
+    },
+    "facets": {
+      "type": "array",
+      "description": "List of facets, each as an object with 'plane' and 'vertices' (indices).",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["plane", "vertices"],
+        "properties": {
+          "plane": {
+            "type": "array",
+            "description": "Plane equation coefficients [a, b, c, d] for ax + by + cz + d = 0.",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": { "type": "number" }
+          },
+          "vertices": {
+            "type": "array",
+            "description": "Indices into the vertices array.",
+            "minItems": 2,
+            "items": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "adjacency": {
+      "type": "array",
+      "description": "Adjacency list: for each facet, indices of adjacent facets.",
+      "minItems": 1,
+      "items": {
+        "type": "array",
+        "items": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "kinks": {
+      "type": "array",
+      "description": "List of kink lines, each as an array of vertex indices.",
+      "items": {
+        "type": "array",
+        "minItems": 2,
+        "items": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional metadata for provenance, comments, etc.",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

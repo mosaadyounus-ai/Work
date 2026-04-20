@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://omega.dev/schema/facet_report.schema.json",
+  "title": "FacetReport",
+  "description": "A contract-grade, versioned facet report for Omega polyhedral pipeline.",
+  "type": "object",
+  "required": ["version", "facets"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema or report version."
+    },
+    "facets": {
+      "type": "array",
+      "description": "List of facet reports.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "plane", "vertices", "adjacent_facets", "winner_map"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique facet identifier."
+          },
+          "plane": {
+            "type": "array",
+            "description": "Plane equation coefficients [a, b, c, d] for ax + by + cz + d = 0.",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": { "type": "number" }
+          },
+          "vertices": {
+            "type": "array",
+            "description": "Indices into the polyhedron vertices array.",
+            "minItems": 2,
+            "items": { "type": "integer", "minimum": 0 }
+          },
+          "adjacent_facets": {
+            "type": "array",
+            "description": "Indices of adjacent facets.",
+            "items": { "type": "integer", "minimum": 0 }
+          },
+          "winner_map": {
+            "type": "object",
+            "description": "Winner region coefficients: e, c_phi, c_r.",
+            "required": ["e", "c_phi", "c_r"],
+            "properties": {
+              "e": { "type": "number" },
+              "c_phi": { "type": "number" },
+              "c_r": { "type": "number" }
+            },
+            "additionalProperties": false
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Optional facet-level metadata.",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional report-level metadata.",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

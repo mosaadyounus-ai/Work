@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://omega.dev/schema/provenance.schema.json",
+  "title": "ProvenanceChain",
+  "description": "Typed provenance chain for geometry artifacts, capturing lineage, versioning, and CI signatures.",
+  "type": "object",
+  "required": ["version", "trace_source", "facet_report", "polyhedron", "envelope", "ci_signature"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema or provenance chain version."
+    },
+    "trace_source": {
+      "type": "object",
+      "required": ["file", "hash", "timestamp"],
+      "properties": {
+        "file": { "type": "string" },
+        "hash": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    },
+    "facet_report": {
+      "type": "object",
+      "required": ["file", "hash", "schema_version"],
+      "properties": {
+        "file": { "type": "string" },
+        "hash": { "type": "string" },
+        "schema_version": { "type": "string" }
+      }
+    },
+    "polyhedron": {
+      "type": "object",
+      "required": ["file", "hash", "schema_version"],
+      "properties": {
+        "file": { "type": "string" },
+        "hash": { "type": "string" },
+        "schema_version": { "type": "string" }
+      }
+    },
+    "envelope": {
+      "type": "object",
+      "required": ["file", "hash", "schema_version"],
+      "properties": {
+        "file": { "type": "string" },
+        "hash": { "type": "string" },
+        "schema_version": { "type": "string" }
+      }
+    },
+    "ci_signature": {
+      "type": "object",
+      "required": ["ci_run_id", "timestamp", "status", "validator_versions"],
+      "properties": {
+        "ci_run_id": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["success", "failure"] },
+        "validator_versions": {
+          "type": "object",
+          "properties": {
+            "facet_report": { "type": "string" },
+            "polyhedron": { "type": "string" },
+            "envelope": { "type": "string" }
+          },
+          "required": ["facet_report", "polyhedron", "envelope"]
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

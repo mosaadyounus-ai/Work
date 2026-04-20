@@ -1,0 +1,68 @@
+{
+  "displayName": "OMEGA Oracle Dashboard",
+  "gridLayout": {
+    "columns": 2,
+    "widgets": [
+      {
+        "title": "Request Latency (95th Percentile)",
+        "xyChart": {
+          "dataSets": [
+            {
+              "timeSeriesQuery": {
+                "timeSeriesFilter": {
+                  "filter": "metric.type=\"run.googleapis.com/request_latencies\" resource.type=\"cloud_run_revision\" resource.label.\"service_name\"=\"oracle\"",
+                  "aggregation": {
+                    "perSeriesAligner": "ALIGN_PERCENTILE_95",
+                    "alignmentPeriod": "60s"
+                  }
+                }
+              },
+              "plotType": "LINE"
+            }
+          ]
+        },
+        "layout": { "x": 0, "y": 0, "width": 1, "height": 1 }
+      },
+      {
+        "title": "5xx Error Rate",
+        "xyChart": {
+          "dataSets": [
+            {
+              "timeSeriesQuery": {
+                "timeSeriesFilter": {
+                  "filter": "metric.type=\"run.googleapis.com/request_count\" resource.type=\"cloud_run_revision\" resource.label.\"service_name\"=\"oracle\" metric.label.\"response_code_class\"=\"5xx\"",
+                  "aggregation": {
+                    "perSeriesAligner": "ALIGN_RATIO",
+                    "alignmentPeriod": "60s"
+                  }
+                }
+              },
+              "plotType": "LINE"
+            }
+          ]
+        },
+        "layout": { "x": 1, "y": 0, "width": 1, "height": 1 }
+      },
+      {
+        "title": "SSL Certificate Expiry (days)",
+        "xyChart": {
+          "dataSets": [
+            {
+              "timeSeriesQuery": {
+                "timeSeriesFilter": {
+                  "filter": "metric.type=\"loadbalancing.googleapis.com/https/ssl_cert_expiration\" resource.type=\"https_lb_rule\" resource.label.\"forwarding_rule_name\"=\"omega-oracle-forwarding-rule\"",
+                  "aggregation": {
+                    "perSeriesAligner": "ALIGN_MIN",
+                    "alignmentPeriod": "60s"
+                  }
+                }
+              },
+              "plotType": "LINE"
+            }
+          ]
+        },
+        "layout": { "x": 0, "y": 1, "width": 2, "height": 1 }
+      }
+    ]
+  }
+}

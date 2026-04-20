@@ -1,0 +1,69 @@
+name: ConversionFront Geometry Contract
+
+on:
+  push:
+    paths:
+      - 'schemas/facet_report.schema.json'
+      - 'schemas/polyhedron.schema.json'
+      - 'Tools/validate_facet_report.py'
+      - 'validate_polyhedron.py'
+      - '**/facet_report*.json'
+      - '**/polyhedron*.json'
+      - '.github/workflows/geometry-validation.yml'
+  pull_request:
+    paths:
+      - 'schemas/facet_report.schema.json'
+      - 'schemas/polyhedron.schema.json'
+      - 'Tools/validate_facet_report.py'
+      - 'validate_polyhedron.py'
+      - '**/facet_report*.json'
+      - '**/polyhedron*.json'
+      - '.github/workflows/geometry-validation.yml'
+
+jobs:
+  validate-geometry:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        facet_report: [trace_pipeline_two_point/facet_report_from_traces.json, sweep_out_two_point/facet_report_from_sweep.json]
+        polyhedron: [trace_pipeline_two_point/polyhedron/polyhedron.json, sweep_out_two_point/polyhedron/polyhedron.json]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install jsonschema
+
+      - name: Validate facet report
+        run: |
+          if [ -f "${{ matrix.facet_report }}" ]; then
+            python Tools/validate_facet_report.py --report ${{ matrix.facet_report }} --schema schemas/facet_report.schema.json --strict
+          else
+            echo "No facet report found at ${{ matrix.facet_report }}; skipping."
+          fi
+
+      - name: Validate polyhedron
+        run: |
+          if [ -f "${{ matrix.polyhedron }}" ]; then
+            python validate_polyhedron.py ${{ matrix.polyhedron }}
+          else
+            echo "No polyhedron found at ${{ matrix.polyhedron }}; skipping."
+          fi
+
+      - name: Contract summary
+        run: |
+          echo "Facet report: ${{ matrix.facet_report }}"
+          echo "Polyhedron: ${{ matrix.polyhedron }}"
+
+      - name: Fail on contract violation
+        if: failure()
+        run: |
+          echo "Geometry contract violation detected. See logs above for details."
+          exit 1
