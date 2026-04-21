@@ -1,48 +1,54 @@
-# Law φ-A: Near-Recursion Attractor Law
+# Law phi-A: Near-Recursion Attractor Law
 
-## Formal Statement
+## Formal statement
 
-\[
-\big(\exists n \ge 1 : d(f^n(x), x) \le \varepsilon\big)\ \wedge\ \neg\exists f^{-1}\ \text{(state-preserving)}\ \Longrightarrow\ x_t \to G_\varphi
-\]
+```text
+(exists n >= 1 : d(f^n(x), x) <= epsilon) and no state-preserving inverse => x_t -> G_phi
+```
 
-## Compact Symbolic
+## Compact symbolic form
 
-\[
-\approx\!\!\circlearrowright\ \wedge\ \neg(\circlearrowleft)\ \Rightarrow\ G_\varphi
-\]
+```text
+approx-loop ^ not(reverse) => G_phi
+```
 
 ## Meaning
 
-- **Near-recursion** (`≈↻`): The orbit of `x` under `f` returns to within `ε` of itself after `n` iterations.
-- **Irreversibility** (`¬↺`): No state-preserving inverse exists (the step is thermodynamically or informationally irreversible).
-- **Attractor** (`G_φ`): The set of states that are both φ-facet-dominated and envelope-admissible.
+- Near-recursion: the orbit of `x` under `f` returns to within `epsilon` of itself after `n` iterations.
+- Irreversibility: no state-preserving inverse exists for the active transition.
+- Attractor `G_phi`: the set of states that are both phi-facet-dominated and envelope-admissible.
 
-## Concrete Definition in Oracle Context
+## Oracle definition
 
-\[
-G_\varphi := \{\, x \mid \text{facet}(x) \in \Phi,\ \text{and}\ W(x; C) \le M_{\min}(C)\ \text{under the φ-governed envelope} \}
-\]
+```text
+G_phi := { x | facet(x) in Phi and W(x; C) <= M_min(C) }
+```
 
 Where:
-- `Φ = {Facet-A, Facet-C}` (the φ-weighted facet family)
-- `W(x; C) = e + C_φ·φ + C_r·r + C_s·s` (envelope functional)
-- `M_min(C)` = tight bound from active supporting plane
+- `Phi = {Facet-A, Facet-C}`
+- `W(x; C) = e + C_phi*phi + C_r*r + C_s*s`
+- `M_min(C)` is the tight bound from the active supporting plane
 
-## System Binding
+## Runtime approximation
+
+The TLA+ layer proves the implication. The kernel uses a bounded runtime approximation to
+measure the premises over the available `phi`, `r`, `s`, and `e` coordinates:
+
+- it computes bounded near-recursion over a small local step horizon
+- it computes irreversibility from the active mode
+- it computes attractor membership from the active facet and envelope status
+
+This keeps the layers honest:
+
+- spec proves the law
+- kernel measures the local runtime state
+- UI displays the current consequence and premise status
+
+## System binding
 
 | Layer | Artifact | Property |
 |-------|----------|----------|
-| Spec | `ConversionFront.tla` | `PhiAttractorProperty` |
-| Mirror | `two_peak_example.json` | `laws[].id = "phi-A"` |
-| Kernel | `oracleKernelCore.ts` | `inPhiAttractor` flag |
-| UI | `OracleWorkbenchPage.tsx` | Attractor indicator |
-
-## Verification
-
-TLC checks: `□(NearRecursion(x) ∧ Irreversible ⇒ ◇InG_φ(x))`
-
-Where:
-- `NearRecursion(x) ≜ ∃ n : d(f^n(x), x) ≤ ε`
-- `Irreversible ≜` no inverse step preserving `(mode, phi, r, e)`
-- `InG_φ(x) ≜` facet ∈ Φ-family ∧ envelope-inside
+| Spec | `spec/modules/ConversionFront.tla` | `PhiAttractorProperty` |
+| Mirror | `mirror/two_peak_example.json` | `laws[].id = "phi-A"` |
+| Kernel | `src/lib/oracleKernelCore.ts` | `inPhiAttractor`, `lawCompliance` |
+| UI | `src/pages/OracleWorkbenchPage.tsx` | Attractor and premise indicators |

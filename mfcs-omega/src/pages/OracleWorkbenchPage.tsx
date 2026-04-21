@@ -1,5 +1,5 @@
 import React from 'react';
-import { EnvelopeReport } from '../lib/oracleKernelCore';
+import type { EnvelopeReport } from '../lib/oracleKernelCore';
 
 type Evaluation = Pick<EnvelopeReport, 'inPhiAttractor' | 'attractorId' | 'lawCompliance'>;
 
@@ -16,24 +16,36 @@ function Tooltip({ children, content }: { children: React.ReactNode; content: st
 }
 
 function Icon({ name }: { name: string }) {
-  return <span aria-label={name}>◈</span>;
+  return <span aria-label={name}>*</span>;
 }
 
 export default function OracleWorkbenchPage({ evaluation }: Props) {
+  const attractorLabel = evaluation.attractorId ?? 'unknown';
+
   return (
     <section>
       {evaluation.inPhiAttractor && (
-        <Badge title="Law φ-A: In G_φ attractor">
-          G_φ Active{evaluation.attractorId ? ` · ${evaluation.attractorId}` : ''}
+        <Badge title="Law phi-A: In G_phi attractor">
+          G_phi Active - {attractorLabel}
         </Badge>
       )}
 
       {evaluation.lawCompliance && (
-        <Tooltip
-          content={`Near-recursion: ${evaluation.lawCompliance.nearRecursion ? 'Yes' : 'No'} | Irreversible: ${evaluation.lawCompliance.irreversible ? 'Yes' : 'No'}`}
-        >
-          <Icon name="phi-law" />
-        </Tooltip>
+        <div>
+          <Tooltip
+            content={`Near-recursion: ${evaluation.lawCompliance.nearRecursion ? 'Yes' : 'No'} | Irreversible: ${evaluation.lawCompliance.irreversible ? 'Yes' : 'No'}`}
+          >
+            <Icon name="phi-law" />
+          </Tooltip>
+          <div>
+            <strong>Law phi-A premises</strong>
+          </div>
+          <div>Near recursion: {evaluation.lawCompliance.nearRecursion ? 'Yes' : 'No'}</div>
+          <div>Irreversible: {evaluation.lawCompliance.irreversible ? 'Yes' : 'No'}</div>
+          <div>
+            Premises satisfied: {evaluation.lawCompliance.premisesSatisfied ? 'Yes' : 'No'}
+          </div>
+        </div>
       )}
     </section>
   );

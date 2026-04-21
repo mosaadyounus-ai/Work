@@ -33,6 +33,7 @@ assert.equal(facetA_bc.lawCompliance?.lawId, 'phi-A', 'lawCompliance.lawId must 
 assert.equal(facetA_bc.lawCompliance?.nearRecursion, false, 'nearRecursion is always false (deferred)');
 assert.equal(facetA_bc.lawCompliance?.irreversible, true, 'BUILD_COMPRESS mode is irreversible');
 assert.equal(facetA_bc.lawCompliance?.inAttractor, true, 'lawCompliance.inAttractor mirrors inPhiAttractor');
+assert.equal(facetA_bc.lawCompliance?.premisesSatisfied, false, 'premises are not satisfied without recurrence');
 
 // ---------------------------------------------------------------------------
 // 2. PHI_FACETS membership — Facet-C in attractor (new in PR)
@@ -43,6 +44,7 @@ assert.equal(facetC_bc.inPhiAttractor, true, 'Facet-C inside=true should be in p
 assert.equal(facetC_bc.attractorId, 'G_phi', 'attractorId should be G_phi for Facet-C in attractor');
 assert.equal(facetC_bc.lawCompliance?.inAttractor, true, 'Facet-C lawCompliance.inAttractor should be true');
 assert.equal(facetC_bc.lawCompliance?.irreversible, true, 'BUILD_COMPRESS is irreversible for Facet-C');
+assert.equal(facetC_bc.lawCompliance?.premisesSatisfied, false, 'Facet-C still requires recurrence to satisfy premises');
 
 // ---------------------------------------------------------------------------
 // 3. Non-PHI facet (Facet-B) — never in attractor
@@ -55,6 +57,7 @@ assert.equal(facetB.lawCompliance?.lawId, 'phi-A', 'lawCompliance.lawId is alway
 assert.equal(facetB.lawCompliance?.irreversible, false, 'ANALYZE mode is not irreversible');
 assert.equal(facetB.lawCompliance?.nearRecursion, false, 'nearRecursion is always false');
 assert.equal(facetB.lawCompliance?.inAttractor, false, 'non-PHI facet lawCompliance.inAttractor is false');
+assert.equal(facetB.lawCompliance?.premisesSatisfied, false, 'premises cannot be satisfied outside the irreversible modes');
 
 // ---------------------------------------------------------------------------
 // 4. inside=false overrides phi-attractor membership
@@ -65,10 +68,12 @@ assert.equal(phiOutside.inPhiAttractor, false, 'inside=false must suppress phi-a
 assert.equal(phiOutside.attractorId, undefined, 'attractorId must be undefined when outside envelope');
 assert.equal(phiOutside.lawCompliance?.inAttractor, false, 'lawCompliance.inAttractor follows inPhiAttractor');
 assert.equal(phiOutside.lawCompliance?.irreversible, true, 'irreversible still reflects mode (BUILD_COMPRESS) regardless of inside');
+assert.equal(phiOutside.lawCompliance?.premisesSatisfied, false, 'outside envelope should not satisfy premises');
 
 const phiOutsideFacetC = core2.evaluate({ ...makeBase(), inside: false, classification: { facet: 'Facet-C', label: 'C', M_min: 2 }, state: { mode: 'FUSION' } });
 assert.equal(phiOutsideFacetC.inPhiAttractor, false, 'inside=false must suppress phi-attractor for Facet-C too');
 assert.equal(phiOutsideFacetC.lawCompliance?.inAttractor, false, 'inAttractor false when outside');
+assert.equal(phiOutsideFacetC.lawCompliance?.premisesSatisfied, false, 'no attractor consequence when outside');
 
 // ---------------------------------------------------------------------------
 // 5. irreversible: FUSION mode
@@ -78,6 +83,7 @@ const fusion = core2.evaluate({ ...makeBase(), classification: { facet: 'Facet-A
 assert.equal(fusion.lawCompliance?.irreversible, true, 'FUSION mode is irreversible');
 assert.equal(fusion.inPhiAttractor, true, 'Facet-A inside=true still in attractor under FUSION');
 assert.equal(fusion.lawCompliance?.inAttractor, true, 'lawCompliance.inAttractor true under FUSION');
+assert.equal(fusion.lawCompliance?.premisesSatisfied, false, 'coordinate-free FUSION input does not claim recurrence');
 
 // ---------------------------------------------------------------------------
 // 6. irreversible: ANALYZE mode → false
@@ -105,14 +111,31 @@ for (const mode of allModes) {
   assert.ok(report.lawCompliance !== undefined, `lawCompliance must always be present in mode ${mode}`);
   assert.equal(report.lawCompliance.lawId, 'phi-A', `lawId must always be phi-A in mode ${mode}`);
   assert.equal(report.lawCompliance.nearRecursion, false, `nearRecursion always false in mode ${mode}`);
+  assert.equal(report.lawCompliance.premisesSatisfied, false, `premises remain false without coordinate data in mode ${mode}`);
 }
 
 // ---------------------------------------------------------------------------
-// 9. nearRecursion is always false (deferred per TODO in source)
+// 9. nearRecursion becomes true when the bounded runtime step model returns
+//    to the same phi/r/s/e coordinates within the configured horizon
 // ---------------------------------------------------------------------------
 
-const nearRecursionCheck = core2.evaluate({ ...makeBase(), inside: true, classification: { facet: 'Facet-A', label: 'A', M_min: 2 }, state: { mode: 'FUSION' } });
-assert.equal(nearRecursionCheck.lawCompliance?.nearRecursion, false, 'nearRecursion is always false regardless of attractor state');
+const nearRecursionCheck = core2.evaluate({
+  ...makeBase(),
+  inside: true,
+  classification: { facet: 'Facet-A', label: 'A', M_min: 2 },
+  state: { mode: 'FUSION', phi: 4, r: 2, s: 0, e: 4 },
+});
+assert.equal(nearRecursionCheck.lawCompliance?.nearRecursion, true, 'FUSION coordinates recur under the bounded runtime step model');
+assert.equal(nearRecursionCheck.lawCompliance?.irreversible, true, 'FUSION remains irreversible in the runtime law check');
+assert.equal(nearRecursionCheck.lawCompliance?.premisesSatisfied, true, 'both runtime premises are satisfied for the recurring FUSION state');
+
+const analyzeRecurring = core2.evaluate({
+  ...makeBase(),
+  state: { mode: 'ANALYZE', phi: 1, r: 1, s: 0, e: 1 },
+});
+assert.equal(analyzeRecurring.lawCompliance?.nearRecursion, true, 'ANALYZE self-loops in the bounded approximation');
+assert.equal(analyzeRecurring.lawCompliance?.irreversible, false, 'ANALYZE remains reversible in the runtime law check');
+assert.equal(analyzeRecurring.lawCompliance?.premisesSatisfied, false, 'recurrence alone does not satisfy phi-A runtime premises');
 
 // ---------------------------------------------------------------------------
 // 10. kinkProximity: kink=null → Infinity
