@@ -87,53 +87,65 @@ export async function GET(request: Request): Promise<Response> {
         })
       );
 
-      for (const [index, item] of items.entries()) {
-        if (signal.aborted) {
+      const heartbeat = setInterval(() => {
+        try {
+          controller.enqueue(encoder.encode(": heartbeat\n\n"));
+        } catch {
+          clearInterval(heartbeat);
+        }
+      }, 500);
+
+      try {
+        for (const [index, item] of items.entries()) {
+          if (signal.aborted) {
+            controller.enqueue(
+              sseFrame("cancelled", {
+                step: index,
+                total: items.length,
+                elapsedMs: Date.now() - startedAt
+              })
+            );
+            controller.close();
+            return;
+          }
+
+          const candidates = nodeState
+            .filter((node) => canAssign(item, node))
+            .map((node) => ({ node, cost: edgeCost(item, node) }))
+            .filter((entry) => Number.isFinite(entry.cost))
+            .sort((a, b) => a.cost - b.cost);
+
+          const picked = candidates[0];
+
+          if (picked) {
+            picked.node.used += 1;
+          }
+
           controller.enqueue(
-            sseFrame("cancelled", {
-              step: index,
+            sseFrame("progress", {
+              step: index + 1,
               total: items.length,
-              elapsedMs: Date.now() - startedAt
+              itemId: item.id,
+              nodeId: picked?.node.id ?? null,
+              cost: picked?.cost ?? null,
+              status: picked ? "assigned" : "unassigned"
             })
           );
-          controller.close();
-          return;
-        }
 
-        const candidates = nodeState
-          .filter((node) => canAssign(item, node))
-          .map((node) => ({ node, cost: edgeCost(item, node) }))
-          .filter((entry) => Number.isFinite(entry.cost))
-          .sort((a, b) => a.cost - b.cost);
-
-        const picked = candidates[0];
-
-        if (picked) {
-          picked.node.used += 1;
+          await wait(30);
         }
 
         controller.enqueue(
-          sseFrame("progress", {
-            step: index + 1,
-            total: items.length,
-            itemId: item.id,
-            nodeId: picked?.node.id ?? null,
-            cost: picked?.cost ?? null,
-            status: picked ? "assigned" : "unassigned"
+          sseFrame("done", {
+            elapsedMs: Date.now() - startedAt,
+            assignments: nodeState.map((node) => ({ id: node.id, used: node.used }))
           })
         );
 
-        await wait(30);
+        controller.close();
+      } finally {
+        clearInterval(heartbeat);
       }
-
-      controller.enqueue(
-        sseFrame("done", {
-          elapsedMs: Date.now() - startedAt,
-          assignments: nodeState.map((node) => ({ id: node.id, used: node.used }))
-        })
-      );
-
-      controller.close();
     }
   });
 
@@ -141,7 +153,7 @@ export async function GET(request: Request): Promise<Response> {
     headers: {
       "Content-Type": "text/event-stream; charset=utf-8",
       "Cache-Control": "no-cache, no-transform",
-      "X-Accel-Buffering": "no"
+      Connection: "keep-alive"
     }
   });
 }

@@ -9,7 +9,7 @@ Create `app/api/solve-stream/route.ts` and keep:
 - `export const runtime = "edge"`
 - `Content-Type: text/event-stream`
 - `Cache-Control: no-cache, no-transform`
-- `X-Accel-Buffering: no`
+- `Connection: keep-alive`
 - input validation for `items` and `nodes` query params so malformed requests return `400`
 
 ## Frontend subscription
@@ -47,5 +47,5 @@ source.onerror = () => {
 ## Notes
 
 - Edge Functions use Web Standard APIs (`Request`, `Response`, `ReadableStream`) instead of Fastify handlers.
-- This route yields between progress events, which keeps chunks flushing continuously in streaming clients.
+- This route emits an SSE heartbeat comment every 500ms (`: heartbeat`) and yields between progress events, helping confirm stream liveness in clients.
 - If solve time can exceed your plan limits, switch to async orchestration (`POST` create job + SSE from shared state like Redis/KV).
