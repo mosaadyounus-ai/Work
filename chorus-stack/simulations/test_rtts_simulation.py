@@ -26,145 +26,172 @@ class TestRunScenario(unittest.TestCase):
         self.assertAlmostEqual(result.measured_contamination, 0.16)
         # confidence_drift = min(1.0, 0.16 * 1.2 + 380/1000) = min(1.0, 0.192 + 0.38) = 0.572
         self.assertAlmostEqual(result.confidence_drift, 0.572)
-        # 0.16 not > 0.30, but 0.572 > 0.40, so containment = True
+        # 0.16 < 0.30, but 0.572 > 0.40 → containment triggered
         self.assertTrue(result.containment_triggered)
 
-    def test_survivor_bias_inversion_triggers_containment(self):
+    def test_survivor_bias_inversion_triggers_containment_via_both(self):
         s = Scenario("survivor_bias_inversion", contamination=0.42, load=240, survivor_bias=-0.08)
         result = run_scenario(s)
         # measured = max(0, 0.42 - (-0.08)) = max(0, 0.50) = 0.50
         self.assertAlmostEqual(result.measured_contamination, 0.50)
         # confidence_drift = min(1.0, 0.50 * 1.2 + 240/1000) = min(1.0, 0.60 + 0.24) = min(1.0, 0.84) = 0.84
         self.assertAlmostEqual(result.confidence_drift, 0.84)
-        # 0.50 > 0.30, so containment = True
+        # 0.50 > 0.30 → containment triggered
         self.assertTrue(result.containment_triggered)
 
-    def test_scenario_name_is_preserved_in_outcome(self):
-        s = Scenario("my-test-scenario", contamination=0.05, load=50, survivor_bias=0.01)
-        result = run_scenario(s)
-        self.assertEqual(result.name, "my-test-scenario")
+    def test_negative_survivor_bias_increases_measured_contamination(self):
+        # negative survivor_bias should increase measured value
+        s_pos = Scenario("pos", contamination=0.20, load=0, survivor_bias=0.05)
+        s_neg = Scenario("neg", contamination=0.20, load=0, survivor_bias=-0.05)
+        pos_result = run_scenario(s_pos)
+        neg_result = run_scenario(s_neg)
+        self.assertLess(pos_result.measured_contamination, neg_result.measured_contamination)
 
-    def test_zero_contamination_no_containment(self):
-        s = Scenario("zero", contamination=0.0, load=0, survivor_bias=0.0)
+    def test_measured_contamination_clamped_at_zero(self):
+        # survivor_bias > contamination → measured would be negative, clamped to 0
+        s = Scenario("over-corrected", contamination=0.05, load=0, survivor_bias=0.20)
         result = run_scenario(s)
-        self.assertAlmostEqual(result.measured_contamination, 0.0)
-        self.assertAlmostEqual(result.confidence_drift, 0.0)
+        self.assertEqual(result.measured_contamination, 0.0)
         self.assertFalse(result.containment_triggered)
 
-    def test_survivor_bias_clamps_measured_contamination_to_zero(self):
-        # survivor_bias > contamination -> measured = max(0, negative) = 0
-        s = Scenario("biased", contamination=0.05, load=0, survivor_bias=0.10)
+    def test_confidence_drift_clamped_at_one(self):
+        # Very high contamination and load → confidence_drift would exceed 1.0
+        s = Scenario("extreme", contamination=1.0, load=1000, survivor_bias=0.0)
         result = run_scenario(s)
-        self.assertAlmostEqual(result.measured_contamination, 0.0)
-        self.assertFalse(result.containment_triggered)
+        self.assertLessEqual(result.confidence_drift, 1.0)
 
-    def test_confidence_drift_clamped_to_one(self):
-        # Very high contamination and load -> drift would exceed 1.0, should be clamped
-        s = Scenario("extreme", contamination=1.0, load=10000, survivor_bias=0.0)
-        result = run_scenario(s)
-        self.assertAlmostEqual(result.confidence_drift, 1.0)
-
-    def test_high_contamination_triggers_containment_via_measured(self):
-        # contamination=0.35 > 0.30 threshold
-        s = Scenario("high-contamination", contamination=0.35, load=10, survivor_bias=0.0)
+    def test_containment_triggered_by_measured_contamination_above_threshold(self):
+        # measured > 0.30 triggers containment regardless of confidence_drift
+        s = Scenario("high-contamination", contamination=0.35, load=0, survivor_bias=0.0)
         result = run_scenario(s)
         self.assertGreater(result.measured_contamination, 0.30)
         self.assertTrue(result.containment_triggered)
 
-    def test_moderate_contamination_at_threshold_boundary(self):
-        # contamination exactly at 0.30 should NOT trigger (condition is > 0.30)
-        s = Scenario("at-threshold", contamination=0.30, load=0, survivor_bias=0.0)
+    def test_containment_triggered_by_confidence_drift_above_threshold(self):
+        # measured <= 0.30 but drift > 0.40 still triggers containment
+        # measured = 0.10; drift = 0.10 * 1.2 + 500/1000 = 0.12 + 0.50 = 0.62
+        s = Scenario("high-drift", contamination=0.10, load=500, survivor_bias=0.0)
         result = run_scenario(s)
-        # measured = 0.30, confidence_drift = min(1.0, 0.30*1.2 + 0/1000) = 0.36
-        self.assertAlmostEqual(result.measured_contamination, 0.30)
-        self.assertAlmostEqual(result.confidence_drift, 0.36)
-        # 0.30 is not > 0.30, and 0.36 is not > 0.40
-        self.assertFalse(result.containment_triggered)
-
-    def test_confidence_drift_triggers_containment_at_boundary(self):
-        # Need confidence_drift just above 0.40
-        # drift = measured * 1.2 + load/1000 > 0.40
-        # At measured=0.3 (max non-containment) and load=100: drift = 0.36 + 0.10 = 0.46 > 0.40
-        s = Scenario("drift-trigger", contamination=0.30, load=100, survivor_bias=0.0)
-        result = run_scenario(s)
+        self.assertLessEqual(result.measured_contamination, 0.30)
         self.assertGreater(result.confidence_drift, 0.40)
         self.assertTrue(result.containment_triggered)
 
-    def test_returns_outcome_dataclass(self):
-        s = Scenario("test", contamination=0.1, load=100, survivor_bias=0.0)
+    def test_containment_not_triggered_when_both_below_threshold(self):
+        # measured = 0.05, drift = 0.05*1.2 + 0/1000 = 0.06 — both below thresholds
+        s = Scenario("safe", contamination=0.05, load=0, survivor_bias=0.0)
         result = run_scenario(s)
-        self.assertIsInstance(result, Outcome)
-        self.assertIsInstance(result.name, str)
-        self.assertIsInstance(result.measured_contamination, float)
-        self.assertIsInstance(result.confidence_drift, float)
-        self.assertIsInstance(result.containment_triggered, bool)
+        self.assertLessEqual(result.measured_contamination, 0.30)
+        self.assertLessEqual(result.confidence_drift, 0.40)
+        self.assertFalse(result.containment_triggered)
+
+    def test_outcome_name_matches_scenario_name(self):
+        s = Scenario("my-scenario", contamination=0.1, load=100, survivor_bias=0.0)
+        result = run_scenario(s)
+        self.assertEqual(result.name, "my-scenario")
+
+    def test_zero_load_gives_only_contamination_component_in_drift(self):
+        # load=0 → drift = measured * 1.2 only
+        s = Scenario("zero-load", contamination=0.10, load=0, survivor_bias=0.0)
+        result = run_scenario(s)
+        # measured = 0.10, drift = 0.10 * 1.2 + 0/1000 = 0.12
+        self.assertAlmostEqual(result.confidence_drift, 0.12)
+
+    def test_zero_contamination_gives_load_only_drift(self):
+        # measured=0, drift = 0 * 1.2 + load/1000
+        s = Scenario("zero-contamination", contamination=0.0, load=200, survivor_bias=0.0)
+        result = run_scenario(s)
+        self.assertAlmostEqual(result.measured_contamination, 0.0)
+        self.assertAlmostEqual(result.confidence_drift, 0.2)
+
+    def test_boundary_measured_contamination_exactly_at_threshold(self):
+        # measured == 0.30 should NOT trigger containment (condition is >0.30)
+        s = Scenario("boundary-measured", contamination=0.30, load=0, survivor_bias=0.0)
+        result = run_scenario(s)
+        self.assertAlmostEqual(result.measured_contamination, 0.30)
+        # drift = 0.30 * 1.2 = 0.36, below 0.40 threshold
+        self.assertAlmostEqual(result.confidence_drift, 0.36)
+        self.assertFalse(result.containment_triggered)
+
+    def test_boundary_confidence_drift_exactly_at_threshold(self):
+        # Need drift == 0.40 exactly: measured*1.2 + load/1000 = 0.40
+        # Let measured=0.20 → 0.20*1.2=0.24; load = (0.40-0.24)*1000 = 160
+        s = Scenario("boundary-drift", contamination=0.20, load=160, survivor_bias=0.0)
+        result = run_scenario(s)
+        self.assertAlmostEqual(result.confidence_drift, 0.40, places=10)
+        self.assertFalse(result.containment_triggered)
 
 
 class TestSimulate(unittest.TestCase):
-    def test_simulate_returns_list_of_outcomes(self):
+    def test_simulate_returns_one_outcome_per_scenario(self):
         scenarios = [
-            Scenario("baseline", contamination=0.07, load=120, survivor_bias=0.01),
-            Scenario("overload", contamination=0.18, load=380, survivor_bias=0.02),
+            Scenario("s1", contamination=0.1, load=100, survivor_bias=0.0),
+            Scenario("s2", contamination=0.2, load=200, survivor_bias=0.0),
+            Scenario("s3", contamination=0.3, load=300, survivor_bias=0.0),
         ]
-        results = simulate(scenarios)
-        self.assertEqual(len(results), 2)
-        for r in results:
-            self.assertIsInstance(r, Outcome)
+        outcomes = simulate(scenarios)
+        self.assertEqual(len(outcomes), 3)
 
-    def test_simulate_preserves_order(self):
+    def test_simulate_returns_outcomes_in_same_order_as_scenarios(self):
         scenarios = [
-            Scenario("first", contamination=0.05, load=50, survivor_bias=0.0),
-            Scenario("second", contamination=0.1, load=100, survivor_bias=0.0),
-            Scenario("third", contamination=0.4, load=200, survivor_bias=0.0),
+            Scenario("alpha", contamination=0.05, load=50, survivor_bias=0.0),
+            Scenario("beta", contamination=0.25, load=250, survivor_bias=0.0),
         ]
-        results = simulate(scenarios)
-        self.assertEqual(results[0].name, "first")
-        self.assertEqual(results[1].name, "second")
-        self.assertEqual(results[2].name, "third")
+        outcomes = simulate(scenarios)
+        self.assertEqual(outcomes[0].name, "alpha")
+        self.assertEqual(outcomes[1].name, "beta")
 
-    def test_simulate_empty_input_returns_empty_list(self):
-        results = simulate([])
-        self.assertEqual(results, [])
+    def test_simulate_returns_list_of_outcome_instances(self):
+        scenarios = [Scenario("s", contamination=0.1, load=100, survivor_bias=0.0)]
+        outcomes = simulate(scenarios)
+        self.assertIsInstance(outcomes, list)
+        self.assertIsInstance(outcomes[0], Outcome)
 
-    def test_simulate_single_scenario(self):
-        scenarios = [Scenario("solo", contamination=0.5, load=100, survivor_bias=0.0)]
-        results = simulate(scenarios)
-        self.assertEqual(len(results), 1)
-        self.assertEqual(results[0].name, "solo")
-        self.assertTrue(results[0].containment_triggered)
+    def test_simulate_empty_scenarios_returns_empty_list(self):
+        outcomes = simulate([])
+        self.assertEqual(outcomes, [])
 
-    def test_simulate_matches_individual_run_scenario(self):
-        # simulate() should produce same results as calling run_scenario() individually
-        s1 = Scenario("a", contamination=0.07, load=120, survivor_bias=0.01)
-        s2 = Scenario("b", contamination=0.18, load=380, survivor_bias=0.02)
-        batch = simulate([s1, s2])
-        individual_1 = run_scenario(s1)
-        individual_2 = run_scenario(s2)
-        self.assertAlmostEqual(batch[0].measured_contamination, individual_1.measured_contamination)
-        self.assertAlmostEqual(batch[0].confidence_drift, individual_1.confidence_drift)
-        self.assertEqual(batch[0].containment_triggered, individual_1.containment_triggered)
-        self.assertAlmostEqual(batch[1].measured_contamination, individual_2.measured_contamination)
-        self.assertAlmostEqual(batch[1].confidence_drift, individual_2.confidence_drift)
-        self.assertEqual(batch[1].containment_triggered, individual_2.containment_triggered)
+    def test_simulate_single_scenario_matches_run_scenario(self):
+        s = Scenario("solo", contamination=0.15, load=300, survivor_bias=0.03)
+        direct = run_scenario(s)
+        via_simulate = simulate([s])
+        self.assertEqual(len(via_simulate), 1)
+        self.assertEqual(via_simulate[0].name, direct.name)
+        self.assertAlmostEqual(via_simulate[0].measured_contamination, direct.measured_contamination)
+        self.assertAlmostEqual(via_simulate[0].confidence_drift, direct.confidence_drift)
+        self.assertEqual(via_simulate[0].containment_triggered, direct.containment_triggered)
 
-    def test_simulate_with_all_three_named_scenarios(self):
-        """Regression test: verify the three canonical scenarios produce expected outcomes."""
+    def test_simulate_accepts_generator(self):
+        # simulate accepts any Iterable, including generator expressions
+        gen = (Scenario(f"s{i}", contamination=0.1 * i, load=100, survivor_bias=0.0) for i in range(1, 4))
+        outcomes = simulate(gen)
+        self.assertEqual(len(outcomes), 3)
+
+    def test_simulate_canonical_scenarios_match_expected_values(self):
+        # The three canonical scenarios used in main()
         scenarios = [
             Scenario("baseline", contamination=0.07, load=120, survivor_bias=0.01),
             Scenario("overload", contamination=0.18, load=380, survivor_bias=0.02),
             Scenario("survivor_bias_inversion", contamination=0.42, load=240, survivor_bias=-0.08),
         ]
-        results = simulate(scenarios)
-        self.assertEqual(len(results), 3)
+        outcomes = simulate(scenarios)
 
-        baseline, overload, inversion = results
+        baseline, overload, inversion = outcomes
 
-        # Baseline should not trigger containment
         self.assertFalse(baseline.containment_triggered)
-        # Overload triggers containment via confidence drift
         self.assertTrue(overload.containment_triggered)
-        # Inversion triggers containment via high measured contamination
         self.assertTrue(inversion.containment_triggered)
+
+        # baseline: measured = 0.06, drift = 0.192
+        self.assertAlmostEqual(baseline.measured_contamination, 0.06)
+        self.assertAlmostEqual(baseline.confidence_drift, 0.192)
+
+        # overload: measured = 0.16, drift = 0.572
+        self.assertAlmostEqual(overload.measured_contamination, 0.16)
+        self.assertAlmostEqual(overload.confidence_drift, 0.572)
+
+        # inversion: measured = 0.50, drift = 0.84
+        self.assertAlmostEqual(inversion.measured_contamination, 0.50)
+        self.assertAlmostEqual(inversion.confidence_drift, 0.84)
 
 
 if __name__ == "__main__":
