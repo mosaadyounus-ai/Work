@@ -1,0 +1,124 @@
+{
+  "schema_version": "1.1.0",
+  "metadata": {
+    "dimension": 2,
+    "laws": [
+      {
+        "id": "phi-A",
+        "name": "Near-Recursion Attractor Law",
+        "symbolic": "≈↻ ∧ ¬(↺) ⇒ G_phi",
+        "formal": "(∃ n ≥ 1: d(f^n(x), x) ≤ ε) ∧ ¬∃ f⁻¹ (state-preserving) ⇒ x_t → G_phi",
+        "informal": "Near-recursion plus non-reversibility generates a phi-governed attractor.",
+        "attractor": {
+          "id": "G_phi",
+          "governing_facets": ["Facet-A"],
+          "admissibility": "W <= M_min",
+          "description": "States landing on phi-governed facets that remain envelope-admissible."
+        }
+      }
+    ]
+  },
+  "embedding": {
+    "type": "two_peak_conversion_front",
+    "coordinates": ["C_phi", "C_r", "C_s", "M"]
+  },
+  "envelope": {
+    "parameters": {
+      "C_phi": 0.0,
+      "C_r": 0.25,
+      "C_s": 0.0,
+      "M": 4.5
+    },
+    "functional": "W = e + C_phi*phi + C_r*r + C_s*s"
+  },
+  "peaks": [
+    {
+      "peak_id": "Peak-A",
+      "cluster_id": "A",
+      "coordinates": {
+        "phi": 4,
+        "r": 2,
+        "s": 0,
+        "e": 4
+      },
+      "envelope_value": 4.5,
+      "facet_assignment": "Facet-A",
+      "dominance_condition": "C_r <= (1 + C_phi) / 4 when C_s = 0"
+    },
+    {
+      "peak_id": "Peak-B",
+      "cluster_id": "B",
+      "coordinates": {
+        "phi": 3,
+        "r": 6,
+        "s": 0,
+        "e": 3
+      },
+      "envelope_value": 4.5,
+      "facet_assignment": "Facet-B",
+      "dominance_condition": "C_r >= (1 + C_phi) / 4 when C_s = 0"
+    }
+  ],
+  "facets": [
+    {
+      "facet_id": "Facet-A",
+      "peak_id": "Peak-A",
+      "label": "High-phi, low-r peak",
+      "phi_governed": true,
+      "weights": {
+        "C_phi": 4,
+        "C_r": 2,
+        "C_s": 0
+      },
+      "normal": [4, 2, 0, 1],
+      "offset": 4,
+      "plane_equation": "M = 4 + 4*C_phi + 2*C_r + 0*C_s",
+      "dominance_region": {
+        "C_r_max": 0.25
+      }
+    },
+    {
+      "facet_id": "Facet-B",
+      "peak_id": "Peak-B",
+      "label": "Low-phi, high-r peak",
+      "phi_governed": false,
+      "weights": {
+        "C_phi": 3,
+        "C_r": 6,
+        "C_s": 0
+      },
+      "normal": [3, 6, 0, 1],
+      "offset": 3,
+      "plane_equation": "M = 3 + 3*C_phi + 6*C_r + 0*C_s",
+      "dominance_region": {
+        "C_r_min": 0.25
+      }
+    }
+  ],
+  "adjacency": [
+    {
+      "edge_id": "Edge-AB",
+      "vertices": ["Peak-A", "Peak-B"],
+      "tie_hyperplane": {
+        "coefficients": {
+          "C_phi": 1,
+          "C_r": -4,
+          "C_s": 0,
+          "const": 1
+        },
+        "equation": "1*C_phi -4*C_r +1 = 0"
+      },
+      "projected_line": {
+        "slope_on_c_phi": 0.25,
+        "intercept_constant": 0.25,
+        "intercept_c_s": 0,
+        "formula": "C_r = (1 + C_phi) / 4"
+      },
+      "kink_equation": {
+        "slope": 0.25,
+        "intercept": 0.25,
+        "formula": "C_r = (1 + C_phi) / 4"
+      }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "mfcs-vessel",
+  "version": "5.0.0",
+  "states": ["IDLE", "EVAL", "EXEC"],
+  "transitions": {
+    "IDLE": ["EVAL"],
+    "EVAL": ["EXEC", "IDLE"],
+    "EXEC": ["IDLE"]
+  }
+}

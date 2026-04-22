@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "FacetReportV3",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "model",
+    "envelope",
+    "traces",
+    "peaks",
+    "facets",
+    "boundaries",
+    "geometry"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "traces": {
+      "type": "array",
+      "minItems": 3
+    },
+    "peaks": {
+      "type": "array",
+      "minItems": 3
+    },
+    "facets": {
+      "type": "array",
+      "minItems": 3
+    },
+    "boundaries": {
+      "type": "array",
+      "minItems": 3
+    },
+    "geometry": {
+      "type": "object",
+      "required": [
+        "degenerate",
+        "accepted",
+        "affine_rank",
+        "relation"
+      ]
+    }
+  }
+}

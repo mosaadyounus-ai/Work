@@ -1,0 +1,196 @@
+{
+  "schema_version": "1.1.0",
+  "metadata": {
+    "dimension": 3,
+    "degenerate": true,
+    "laws": [
+      {
+        "id": "phi-A",
+        "name": "Near-Recursion Attractor Law",
+        "symbolic": "≈↻ ∧ ¬(↺) ⇒ G_phi",
+        "formal": "(∃ n ≥ 1: d(f^n(x), x) ≤ ε) ∧ ¬∃ f⁻¹ (state-preserving) ⇒ x_t → G_phi",
+        "informal": "In the advanced mirror, the phi-governed attractor is projected through the P1 support family.",
+        "attractor": {
+          "id": "G_phi",
+          "governing_facets": ["Facet-P1"],
+          "admissibility": "W <= M_min",
+          "description": "The high-phi support family in the advanced mirror."
+        }
+      }
+    ]
+  },
+  "embedding": {
+    "type": "three_peak_conversion_front",
+    "coordinates": ["C_phi", "C_r", "C_s", "M"]
+  },
+  "envelope": {
+    "parameters": {
+      "C_phi": 0.0,
+      "C_r": 0.25,
+      "C_s": 0.0,
+      "M": 4.5
+    },
+    "functional": "W = e + C_phi*phi + C_r*r + C_s*s"
+  },
+  "peaks": [
+    {
+      "peak_id": "Peak-P1",
+      "cluster_id": "P1",
+      "coordinates": {
+        "phi": 4,
+        "r": 2,
+        "s": 0,
+        "e": 4
+      },
+      "envelope_value": 4.5,
+      "facet_assignment": "Facet-P1",
+      "dominance_condition": "High-phi support plane from the v0.3.0 sweep oracle."
+    },
+    {
+      "peak_id": "Peak-P2",
+      "cluster_id": "P2",
+      "coordinates": {
+        "phi": 3,
+        "r": 6,
+        "s": 1,
+        "e": 3
+      },
+      "envelope_value": 4.5,
+      "facet_assignment": "Facet-P2",
+      "dominance_condition": "Intermediate witness plane; redundant along the degenerate line when C_s = 0."
+    },
+    {
+      "peak_id": "Peak-P3",
+      "cluster_id": "P3",
+      "coordinates": {
+        "phi": 2,
+        "r": 10,
+        "s": 2,
+        "e": 2
+      },
+      "envelope_value": 4.5,
+      "facet_assignment": "Facet-P3",
+      "dominance_condition": "High-r / high-s support plane from the v0.3.0 sweep oracle."
+    }
+  ],
+  "facets": [
+    {
+      "facet_id": "Facet-P1",
+      "peak_id": "Peak-P1",
+      "label": "High-phi support plane",
+      "phi_governed": true,
+      "weights": {
+        "C_phi": 4,
+        "C_r": 2,
+        "C_s": 0
+      },
+      "normal": [4, 2, 0, 1],
+      "offset": 4,
+      "plane_equation": "M = 4 + 4*C_phi + 2*C_r + 0*C_s"
+    },
+    {
+      "facet_id": "Facet-P2",
+      "peak_id": "Peak-P2",
+      "label": "Intermediate witness plane",
+      "phi_governed": false,
+      "weights": {
+        "C_phi": 3,
+        "C_r": 6,
+        "C_s": 1
+      },
+      "normal": [3, 6, 1, 1],
+      "offset": 3,
+      "plane_equation": "M = 3 + 3*C_phi + 6*C_r + 1*C_s"
+    },
+    {
+      "facet_id": "Facet-P3",
+      "peak_id": "Peak-P3",
+      "label": "High-r / high-s support plane",
+      "phi_governed": false,
+      "weights": {
+        "C_phi": 2,
+        "C_r": 10,
+        "C_s": 2
+      },
+      "normal": [2, 10, 2, 1],
+      "offset": 2,
+      "plane_equation": "M = 2 + 2*C_phi + 10*C_r + 2*C_s"
+    }
+  ],
+  "adjacency": [
+    {
+      "edge_id": "Edge-P1-P2",
+      "vertices": ["Peak-P1", "Peak-P2"],
+      "tie_hyperplane": {
+        "coefficients": {
+          "C_phi": 1,
+          "C_r": -4,
+          "C_s": -1,
+          "const": 1
+        },
+        "equation": "1*C_phi -4*C_r -1*C_s +1 = 0"
+      },
+      "projected_line": {
+        "slope_on_c_phi": 0.25,
+        "intercept_constant": 0.25,
+        "intercept_c_s": -0.25,
+        "formula": "C_r = (1 + C_phi - C_s) / 4"
+      }
+    },
+    {
+      "edge_id": "Edge-P1-P3",
+      "vertices": ["Peak-P1", "Peak-P3"],
+      "tie_hyperplane": {
+        "coefficients": {
+          "C_phi": 2,
+          "C_r": -8,
+          "C_s": -2,
+          "const": 2
+        },
+        "equation": "2*C_phi -8*C_r -2*C_s +2 = 0"
+      },
+      "projected_line": {
+        "slope_on_c_phi": 0.25,
+        "intercept_constant": 0.25,
+        "intercept_c_s": -0.25,
+        "formula": "C_r = (1 + C_phi - C_s) / 4"
+      }
+    },
+    {
+      "edge_id": "Edge-P2-P3",
+      "vertices": ["Peak-P2", "Peak-P3"],
+      "tie_hyperplane": {
+        "coefficients": {
+          "C_phi": 1,
+          "C_r": -4,
+          "C_s": -1,
+          "const": 1
+        },
+        "equation": "1*C_phi -4*C_r -1*C_s +1 = 0"
+      },
+      "projected_line": {
+        "slope_on_c_phi": 0.25,
+        "intercept_constant": 0.25,
+        "intercept_c_s": -0.25,
+        "formula": "C_r = (1 + C_phi - C_s) / 4"
+      }
+    }
+  ],
+  "geometry": {
+    "degenerate": true,
+    "accepted": true,
+    "affine_rank": 1,
+    "relation": {
+      "type": "collinear",
+      "equation": "s = (r - 2) / 4",
+      "residuals": {
+        "Peak-P1": 0.0,
+        "Peak-P2": 0.0,
+        "Peak-P3": 0.0
+      }
+    },
+    "warnings": [
+      "The advanced three-peak contract is degenerate; Peak-P2 becomes a witness plane rather than a stable winner when C_s = 0."
+    ]
+  }
+}
