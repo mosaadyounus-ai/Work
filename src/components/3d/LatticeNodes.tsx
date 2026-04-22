@@ -89,7 +89,7 @@ export function LatticeNodes({ hue = 170, speed = 1.0, complexity = 1.0, frequen
   const lineRef = useRef<THREE.LineSegments>(null);
   const dummyRef = useRef(new THREE.Object3D());
   const tempColorRef = useRef(new THREE.Color());
-  const accentColor = useMemo(() => new THREE.Color(`hsl(${hue}, 90%, 55%)`), [hue]);
+  const accentColor = useMemo(() => new THREE.Color(`hsl(${hue}, 90%, 62%)`), [hue]);
 
   const densityLevel = useMemo(() => complexityToLevel(complexity), [complexity]);
 
@@ -100,7 +100,18 @@ export function LatticeNodes({ hue = 170, speed = 1.0, complexity = 1.0, frequen
     HARMONIC_SHELLS.forEach((shell, shellIndex) => {
       const count = shell.role === "core" ? 1 : shell.baseNodes * densityLevel;
       const radius = shell.radius * 3.6;
-      const baseColor = new THREE.Color(shell.color);
+      const baseColor =
+        shell.role === "core"
+          ? new THREE.Color("#f2fbff")
+          : shell.role === "mirror"
+            ? new THREE.Color("#93ecff")
+            : shell.role === "triad"
+              ? new THREE.Color("#5eb4ff")
+              : shell.role === "envelope"
+                ? new THREE.Color("#75ffe0")
+                : shell.role === "telemetry"
+                  ? new THREE.Color("#6e8cff")
+                  : new THREE.Color("#20316b");
 
       for (let index = 0; index < count; index += 1) {
         nextNodes.push({
@@ -140,12 +151,12 @@ export function LatticeNodes({ hue = 170, speed = 1.0, complexity = 1.0, frequen
     const positions = lineRef.current?.geometry.attributes.position.array as Float32Array | undefined;
 
     nodes.forEach((node, index) => {
-      const shellRate = drive * (0.16 + node.shell.harmonic * 0.04);
+      const shellRate = drive * (0.13 + node.shell.harmonic * 0.032);
       const wave = Math.sin(time * shellRate + node.phaseOffset);
-      const spiral = time * 0.05 * drive * (0.3 + node.shell.harmonic * 0.1);
+      const spiral = time * 0.034 * drive * (0.3 + node.shell.harmonic * 0.08);
       const cos = Math.cos(spiral + node.phaseOffset * 0.05);
       const sin = Math.sin(spiral + node.phaseOffset * 0.05);
-      const radialScale = 1 + wave * (0.035 + node.shellIndex * 0.008) * node.amplitude;
+      const radialScale = 1 + wave * (0.024 + node.shellIndex * 0.006) * node.amplitude;
 
       const baseX = node.basePosition.x;
       const baseY = node.basePosition.y;
@@ -160,14 +171,14 @@ export function LatticeNodes({ hue = 170, speed = 1.0, complexity = 1.0, frequen
       dummy.position.copy(node.currentPosition);
       dummy.scale.setScalar(
         node.shell.role === "core"
-          ? 0.85 + wave * 0.08 + drive * 0.04
-          : 0.13 + node.amplitude * 0.07 + drive * 0.015
+          ? 0.54 + wave * 0.05 + drive * 0.025
+          : 0.085 + node.amplitude * 0.045 + drive * 0.01
       );
       dummy.updateMatrix();
       meshRef.current.setMatrixAt(index, dummy.matrix);
 
-      tempColor.copy(node.baseColor).lerp(accentColor, 0.18 + node.shellIndex * 0.07);
-      tempColor.offsetHSL(0, 0, wave * 0.03);
+      tempColor.copy(node.baseColor).lerp(accentColor, 0.08 + node.shellIndex * 0.05);
+      tempColor.offsetHSL(0, 0, wave * 0.02);
       meshRef.current.setColorAt(index, tempColor);
     });
 
@@ -197,25 +208,25 @@ export function LatticeNodes({ hue = 170, speed = 1.0, complexity = 1.0, frequen
     <group>
       <mesh scale={4.2}>
         <sphereGeometry args={[1, 48, 48]} />
-        <meshBasicMaterial color="#ff5a36" transparent opacity={0.045} depthWrite={false} />
+        <meshBasicMaterial color="#1236a5" transparent opacity={0.018} depthWrite={false} />
       </mesh>
       <mesh scale={8.4}>
         <sphereGeometry args={[1, 48, 48]} />
-        <meshBasicMaterial color="#76e4b3" transparent opacity={0.03} depthWrite={false} />
+        <meshBasicMaterial color="#19b2ff" transparent opacity={0.015} depthWrite={false} />
       </mesh>
       <mesh scale={13}>
         <sphereGeometry args={[1, 48, 48]} />
-        <meshBasicMaterial color="#3767ff" transparent opacity={0.022} depthWrite={false} />
+        <meshBasicMaterial color="#7df5ff" transparent opacity={0.012} depthWrite={false} />
       </mesh>
 
       <instancedMesh ref={meshRef} args={[undefined, undefined, nodes.length]}>
         <sphereGeometry args={[1, 12, 12]} />
-        <meshBasicMaterial vertexColors transparent opacity={0.82} />
+        <meshBasicMaterial vertexColors transparent opacity={0.94} />
       </instancedMesh>
 
       <lineSegments ref={lineRef}>
         <primitive object={lineGeometry} attach="geometry" />
-        <lineBasicMaterial color={accentColor} transparent opacity={0.22} />
+        <lineBasicMaterial color={accentColor} transparent opacity={0.12} blending={THREE.AdditiveBlending} />
       </lineSegments>
     </group>
   );

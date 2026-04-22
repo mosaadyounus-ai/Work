@@ -39,24 +39,24 @@ const fragmentShader = `
   varying vec3 vWorldPosition;
 
   vec3 spectralMap(float x) {
-    vec3 deepBlue = vec3(0.03, 0.08, 0.26);
-    vec3 cyan = vec3(0.13, 0.68, 0.92);
-    vec3 emerald = vec3(0.13, 0.82, 0.56);
-    vec3 amber = vec3(0.98, 0.68, 0.08);
-    vec3 orange = vec3(0.98, 0.38, 0.07);
-    vec3 red = vec3(0.92, 0.16, 0.14);
+    vec3 voidBlue = vec3(0.01, 0.03, 0.08);
+    vec3 navy = vec3(0.03, 0.11, 0.30);
+    vec3 electricBlue = vec3(0.08, 0.55, 0.96);
+    vec3 cyan = vec3(0.24, 0.94, 0.98);
+    vec3 ice = vec3(0.86, 0.98, 1.00);
 
-    if (x < 0.18) return mix(deepBlue, cyan, x / 0.18);
-    if (x < 0.38) return mix(cyan, emerald, (x - 0.18) / 0.20);
-    if (x < 0.60) return mix(emerald, amber, (x - 0.38) / 0.22);
-    if (x < 0.82) return mix(amber, orange, (x - 0.60) / 0.22);
-    return mix(orange, red, (x - 0.82) / 0.18);
+    if (x < 0.18) return mix(voidBlue, navy, x / 0.18);
+    if (x < 0.46) return mix(navy, electricBlue, (x - 0.18) / 0.28);
+    if (x < 0.72) return mix(electricBlue, cyan, (x - 0.46) / 0.26);
+    return mix(cyan, ice, (x - 0.72) / 0.28);
   }
 
   vec3 applyHueAccent(vec3 color, float hue) {
     float accent = clamp((sin(radians(hue)) + 1.0) * 0.5, 0.0, 1.0);
     vec3 teal = vec3(0.06, 0.95, 0.83);
-    return mix(color, mix(color, teal, 0.22), accent * 0.14);
+    vec3 violet = vec3(0.62, 0.38, 1.0);
+    vec3 accentColor = mix(violet, teal, accent);
+    return mix(color, accentColor, 0.08);
   }
 
   void main() {
@@ -84,15 +84,15 @@ const fragmentShader = `
 
     float centerGlow = exp(-pow(length(rayDir.xy) * 1.55, 2.0));
     float vignette = smoothstep(1.12, 0.15, length(vUv - 0.5));
-    float shellMask = smoothstep(0.02, 0.95, intensity * 0.9 + centerGlow * 0.45);
-    float highlight = pow(clamp(coherence, 0.0, 1.0), 3.2) * 0.55;
-    float normalized = clamp(intensity * 0.95 + centerGlow * 0.32 + highlight * 0.3, 0.0, 1.0);
+    float shellMask = smoothstep(0.04, 0.82, intensity * 0.74 + centerGlow * 0.18);
+    float highlight = pow(clamp(coherence, 0.0, 1.0), 4.1) * 0.48;
+    float normalized = clamp(intensity * 0.62 + centerGlow * 0.12 + highlight * 0.26, 0.0, 1.0);
 
     vec3 color = spectralMap(normalized);
     color = applyHueAccent(color, uHue);
-    color += vec3(1.0, 0.94, 0.82) * highlight * (0.35 + centerGlow * 0.4);
+    color += vec3(0.92, 0.98, 1.0) * highlight * (0.22 + centerGlow * 0.14);
 
-    float alpha = clamp(shellMask * vignette * 0.56 + centerGlow * 0.18, 0.0, 0.72);
+    float alpha = clamp(shellMask * vignette * 0.28 + centerGlow * 0.06, 0.0, 0.34);
     gl_FragColor = vec4(color, alpha);
   }
 `;

@@ -31,21 +31,22 @@ export function LatticeScene({ hue, speed, complexity, frequency }: LatticeScene
           onStart={() => setAutoRotate(false)}
         />
 
-        <color attach="background" args={["#050a10"]} />
-        <fog attach="fog" args={["#050a10", 16, 46]} />
+        <color attach="background" args={["#020611"]} />
+        <fog attach="fog" args={["#020611", 18, 54]} />
 
-        <ambientLight intensity={0.25} />
-        <pointLight position={[0, 0.5, 1]} intensity={7.5} distance={18} color="#ff6b28" />
-        <pointLight position={[8, 8, 9]} intensity={0.9} color={`hsl(${accentHue}, 100%, 58%)`} />
-        <pointLight position={[-10, 7, -12]} intensity={0.75} color="#2a67ff" />
-        <pointLight position={[0, -6, 10]} intensity={0.4} color="#4bdff7" />
+        <ambientLight intensity={0.18} />
+        <pointLight position={[0, 0.5, 2]} intensity={2.8} distance={16} color="#8fe9ff" />
+        <pointLight position={[8, 8, 9]} intensity={0.75} color={`hsl(${accentHue}, 100%, 60%)`} />
+        <pointLight position={[-10, 7, -12]} intensity={0.9} color="#275dff" />
+        <pointLight position={[0, -6, 10]} intensity={0.55} color="#9af8ff" />
+        <gridHelper args={[44, 32, "#124b6a", "#082132"]} position={[0, -7.8, 0]} />
 
         <InterferenceField hue={hue} speed={speed} complexity={complexity} frequency={frequency} />
         <LatticeNodes hue={hue} speed={speed} complexity={complexity} frequency={frequency} />
         <Monolith />
 
         <EffectComposer>
-          <Bloom intensity={1.1} luminanceThreshold={0.2} luminanceSmoothing={0.92} />
+          <Bloom intensity={1.35} luminanceThreshold={0.24} luminanceSmoothing={0.92} />
         </EffectComposer>
       </Canvas>
     </div>
