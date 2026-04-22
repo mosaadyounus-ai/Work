@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Activity, Box, Camera, Shield, Zap } from "lucide-react";
+import { Activity, Bell, BellOff, Box, Camera, Shield, Zap } from "lucide-react";
 import { LatticeScene } from "../components/3d/LatticeScene";
 import { CommandInput } from "../components/CommandInput";
 import { GlassHUD } from "../components/GlassHUD";
@@ -92,6 +92,7 @@ export default function LatticePage() {
   const [isSynced, setIsSynced] = useState(false);
   const [currentPlateIdx, setCurrentPlateIdx] = useState(0);
   const [lastLinkTimestamp, setLastLinkTimestamp] = useState(0);
+  const [notificationsVisible, setNotificationsVisible] = useState(true);
 
   const lastAppliedTimestampRef = useRef(0);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -247,7 +248,10 @@ export default function LatticePage() {
         complexity={resParams.complexity}
         frequency={resParams.frequency}
       />
-      <Notifications />
+      <Notifications
+        visible={notificationsVisible}
+        className="right-6 top-28 w-[min(22rem,calc(100vw-2rem))] md:right-8 md:top-32"
+      />
 
       <nav className="relative z-10 flex items-center justify-between px-8 py-6">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-4">
@@ -263,9 +267,13 @@ export default function LatticePage() {
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="flex items-center gap-4 text-[10px] font-mono uppercase tracking-[0.2em]"
+          role="toolbar"
+          aria-label="Scene controls"
+          className="flex flex-wrap items-center justify-end gap-3 text-[10px] font-mono uppercase tracking-[0.2em]"
         >
           <div
+            role="status"
+            aria-live="polite"
             className={cn(
               "flex items-center gap-2 rounded-full border px-3 py-1 transition-all duration-300",
               isSynced
@@ -288,10 +296,29 @@ export default function LatticePage() {
           </div>
 
           <button
-            onClick={captureScreen}
-            className="group flex items-center gap-2 rounded border border-white/5 p-2 transition-all hover:bg-chorus-primary/10"
+            type="button"
+            onClick={() => setNotificationsVisible((current) => !current)}
+            aria-pressed={notificationsVisible}
+            aria-label={notificationsVisible ? "Hide activity feed" : "Show activity feed"}
+            title={notificationsVisible ? "Hide activity feed" : "Show activity feed"}
+            className="group flex min-h-10 items-center gap-2 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-white/70 transition-all hover:border-chorus-primary/40 hover:bg-chorus-primary/10 hover:text-chorus-primary focus-visible:border-chorus-primary focus-visible:text-chorus-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chorus-primary/40"
           >
-            <Camera className="h-3 w-3 transition-transform group-hover:scale-110" />
+            {notificationsVisible ? (
+              <Bell className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
+            ) : (
+              <BellOff className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
+            )}
+            <span className="text-[9px]">{notificationsVisible ? "ACTIVITY_ON" : "ACTIVITY_OFF"}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={captureScreen}
+            aria-label="Capture resonance field as PNG"
+            title="Capture resonance field as PNG"
+            className="group flex min-h-10 items-center gap-2 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-white/80 transition-all hover:border-chorus-primary/40 hover:bg-chorus-primary/10 hover:text-chorus-primary focus-visible:border-chorus-primary focus-visible:text-chorus-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chorus-primary/40"
+          >
+            <Camera className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
             <span className="text-[9px]">RES_CAPTURE</span>
           </button>
         </motion.div>
