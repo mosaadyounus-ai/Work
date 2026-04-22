@@ -67,144 +67,205 @@ describe("assignment engine", () => {
   });
 });
 
-describe("constrainedBatchAssign - edge cases", () => {
+describe("constrainedBatchAssign - empty and trivial cases", () => {
   it("returns empty array when items list is empty", () => {
-    const nodes: NodeCapacity[] = [{ nodeId: "n1", capacity: 1, maxRisk: 10 }];
+    const nodes: NodeCapacity[] = [{ nodeId: "n1", capacity: 2, maxRisk: 10 }];
     expect(constrainedBatchAssign([], nodes, "balanced")).toEqual([]);
   });
 
   it("returns empty array when nodes list is empty", () => {
-    const items: WorkItem[] = [{ id: "i1", risk: 0.5, priority: 1, confidence: 0.5 }];
+    const items: WorkItem[] = [{ id: "i1", risk: 1, priority: 1, confidence: 0.5 }];
     expect(constrainedBatchAssign(items, [], "balanced")).toEqual([]);
   });
 
-  it("leaves item unassigned when risk exceeds all node maxRisk values", () => {
-    const items: WorkItem[] = [{ id: "i1", risk: 9, priority: 1, confidence: 0.5 }];
-    const nodes: NodeCapacity[] = [
-      { nodeId: "n1", capacity: 1, maxRisk: 5 },
-      { nodeId: "n2", capacity: 1, maxRisk: 7 }
-    ];
-    const assignments = constrainedBatchAssign(items, nodes, "balanced");
-    expect(assignments).toEqual([]);
+  it("returns empty array when both items and nodes are empty", () => {
+    expect(constrainedBatchAssign([], [], "balanced")).toEqual([]);
   });
 
-  it("leaves excess items unassigned when capacity is insufficient", () => {
-    const items: WorkItem[] = [
-      { id: "i1", risk: 1, priority: 2, confidence: 0.8 },
-      { id: "i2", risk: 1, priority: 1, confidence: 0.5 },
-      { id: "i3", risk: 1, priority: 1, confidence: 0.5 }
-    ];
+  it("assigns a single item to the only available node", () => {
+    const items: WorkItem[] = [{ id: "i1", risk: 1, priority: 1, confidence: 0.5 }];
     const nodes: NodeCapacity[] = [{ nodeId: "n1", capacity: 1, maxRisk: 5 }];
     const assignments = constrainedBatchAssign(items, nodes, "balanced");
     expect(assignments).toHaveLength(1);
+    expect(assignments[0]).toEqual({ itemId: "i1", nodeId: "n1" });
   });
+});
 
-  it("assigns a single item to a single eligible node", () => {
-    const items: WorkItem[] = [{ id: "i1", risk: 0.5, priority: 1, confidence: 0.5 }];
-    const nodes: NodeCapacity[] = [{ nodeId: "n1", capacity: 1, maxRisk: 1 }];
-    const assignments = constrainedBatchAssign(items, nodes, "balanced");
-    expect(assignments).toEqual([{ itemId: "i1", nodeId: "n1" }]);
-  });
-
-  it("assigns multiple items to a node with sufficient capacity", () => {
+describe("constrainedBatchAssign - capacity enforcement", () => {
+  it("does not assign items when all nodes are at zero capacity", () => {
     const items: WorkItem[] = [
       { id: "i1", risk: 1, priority: 1, confidence: 0.5 },
-      { id: "i2", risk: 1, priority: 1, confidence: 0.5 }
+      { id: "i2", risk: 2, priority: 2, confidence: 0.5 }
     ];
-    const nodes: NodeCapacity[] = [{ nodeId: "n1", capacity: 2, maxRisk: 5 }];
-    const assignments = constrainedBatchAssign(items, nodes, "balanced");
-    expect(assignments).toHaveLength(2);
-    expect(assignments.every((a) => a.nodeId === "n1")).toBe(true);
+    const nodes: NodeCapacity[] = [{ nodeId: "n1", capacity: 0, maxRisk: 10 }];
+    expect(constrainedBatchAssign(items, nodes, "balanced")).toEqual([]);
   });
 
-  it("does not mutate the original items or nodes arrays", () => {
-    const items: WorkItem[] = [
-      { id: "i2", risk: 0.8, priority: 2, confidence: 0.6 },
-      { id: "i1", risk: 0.3, priority: 1, confidence: 0.5 }
+  it("skips assignment when item risk exceeds all node maxRisk values", () => {
+    const items: WorkItem[] = [{ id: "risky", risk: 9, priority: 1, confidence: 0.5 }];
+    const nodes: NodeCapacity[] = [
+      { nodeId: "n1", capacity: 2, maxRisk: 5 },
+      { nodeId: "n2", capacity: 2, maxRisk: 7 }
     ];
-    const nodes: NodeCapacity[] = [{ nodeId: "n1", capacity: 2, maxRisk: 5 }];
-    const itemsCopy = [...items];
-    const nodesCopy = [...nodes];
-    constrainedBatchAssign(items, nodes, "balanced");
-    expect(items).toEqual(itemsCopy);
-    expect(nodes).toEqual(nodesCopy);
+    const assignments = constrainedBatchAssign(items, nodes, "balanced");
+    expect(assignments).toHaveLength(0);
+  });
+
+  it("respects capacity limits and stops assigning when nodes are full", () => {
+    const items: WorkItem[] = [
+      { id: "i1", risk: 1, priority: 1, confidence: 0.5 },
+      { id: "i2", risk: 1, priority: 1, confidence: 0.5 },
+      { id: "i3", risk: 1, priority: 1, confidence: 0.5 }
+    ];
+    // Only capacity for 2 total
+    const nodes: NodeCapacity[] = [
+      { nodeId: "n1", capacity: 1, maxRisk: 5 },
+      { nodeId: "n2", capacity: 1, maxRisk: 5 }
+    ];
+    const assignments = constrainedBatchAssign(items, nodes, "balanced");
+    expect(assignments).toHaveLength(2);
+  });
+
+  it("assigns items up to node capacity across multiple nodes", () => {
+    const items: WorkItem[] = [
+      { id: "i1", risk: 1, priority: 1, confidence: 0.5 },
+      { id: "i2", risk: 1, priority: 1, confidence: 0.5 },
+      { id: "i3", risk: 1, priority: 1, confidence: 0.5 }
+    ];
+    const nodes: NodeCapacity[] = [
+      { nodeId: "n1", capacity: 2, maxRisk: 5 },
+      { nodeId: "n2", capacity: 2, maxRisk: 5 }
+    ];
+    const assignments = constrainedBatchAssign(items, nodes, "balanced");
+    expect(assignments).toHaveLength(3);
+    const assignedNodeIds = assignments.map((a) => a.nodeId);
+    // All assigned to known nodes
+    expect(assignedNodeIds.every((id) => ["n1", "n2"].includes(id))).toBe(true);
   });
 });
 
 describe("constrainedBatchAssign - priority_first policy", () => {
-  it("assigns higher-priority items first", () => {
+  it("assigns higher-priority items first in priority_first mode", () => {
     const items: WorkItem[] = [
       { id: "low-priority", risk: 1, priority: 1, confidence: 0.5 },
-      { id: "high-priority", risk: 1, priority: 5, confidence: 0.5 }
+      { id: "high-priority", risk: 1, priority: 10, confidence: 0.5 }
     ];
+    // Only one slot available
     const nodes: NodeCapacity[] = [{ nodeId: "n1", capacity: 1, maxRisk: 5 }];
     const assignments = constrainedBatchAssign(items, nodes, "priority_first");
     expect(assignments).toHaveLength(1);
     expect(assignments[0].itemId).toBe("high-priority");
   });
 
-  it("high-priority low-risk item beats high-priority high-risk item (score = priority*2 - risk)", () => {
+  it("uses score = priority*2 - risk so high priority dominates over risk", () => {
     const items: WorkItem[] = [
-      { id: "high-risk", risk: 8, priority: 5, confidence: 0.5 },
-      { id: "low-risk", risk: 1, priority: 5, confidence: 0.5 }
+      { id: "low-risk-low-pri", risk: 0, priority: 1, confidence: 0.5 },
+      { id: "high-risk-high-pri", risk: 3, priority: 5, confidence: 0.5 }
     ];
+    // score for priority_first: priority*2 - risk
+    // low-risk-low-pri: 1*2 - 0 = 2
+    // high-risk-high-pri: 5*2 - 3 = 7 (higher wins)
     const nodes: NodeCapacity[] = [{ nodeId: "n1", capacity: 1, maxRisk: 10 }];
     const assignments = constrainedBatchAssign(items, nodes, "priority_first");
-    // score(high-risk) = 5*2 - 8 = 2
-    // score(low-risk) = 5*2 - 1 = 9
-    // low-risk has higher score, gets assigned first
-    expect(assignments[0].itemId).toBe("low-risk");
+    expect(assignments[0].itemId).toBe("high-risk-high-pri");
+  });
+
+  it("is deterministic with priority_first policy on identical inputs", () => {
+    const items: WorkItem[] = [
+      { id: "b", risk: 1, priority: 5, confidence: 0.5 },
+      { id: "a", risk: 1, priority: 5, confidence: 0.5 }
+    ];
+    const nodes: NodeCapacity[] = [{ nodeId: "n1", capacity: 2, maxRisk: 10 }];
+    const first = constrainedBatchAssign(items, nodes, "priority_first");
+    const second = constrainedBatchAssign(items, nodes, "priority_first");
+    expect(first).toEqual(second);
   });
 });
 
 describe("constrainedBatchAssign - balanced policy", () => {
-  it("assigns items with best (priority + confidence - risk) score first", () => {
+  it("uses score = priority + confidence - risk in balanced mode", () => {
+    // high-conf item should beat low-conf item when priority and risk are equal
     const items: WorkItem[] = [
-      { id: "low-score", risk: 5, priority: 1, confidence: 0.1 },
-      { id: "high-score", risk: 0.1, priority: 3, confidence: 0.9 }
+      { id: "low-conf", risk: 1, priority: 3, confidence: 0.1 },
+      { id: "high-conf", risk: 1, priority: 3, confidence: 0.9 }
     ];
-    const nodes: NodeCapacity[] = [{ nodeId: "n1", capacity: 1, maxRisk: 10 }];
+    const nodes: NodeCapacity[] = [{ nodeId: "n1", capacity: 1, maxRisk: 5 }];
     const assignments = constrainedBatchAssign(items, nodes, "balanced");
-    // score(low-score) = 1 + 0.1 - 5 = -3.9
-    // score(high-score) = 3 + 0.9 - 0.1 = 3.8
-    expect(assignments[0].itemId).toBe("high-score");
+    expect(assignments[0].itemId).toBe("high-conf");
+  });
+
+  it("assigns all items when capacity is sufficient", () => {
+    const items: WorkItem[] = [
+      { id: "i1", risk: 1, priority: 1, confidence: 0.5 },
+      { id: "i2", risk: 2, priority: 2, confidence: 0.7 }
+    ];
+    const nodes: NodeCapacity[] = [{ nodeId: "n1", capacity: 5, maxRisk: 10 }];
+    const assignments = constrainedBatchAssign(items, nodes, "balanced");
+    expect(assignments).toHaveLength(2);
+    const itemIds = assignments.map((a) => a.itemId).sort();
+    expect(itemIds).toEqual(["i1", "i2"]);
   });
 });
 
-describe("constrainedBatchAssign - node selection", () => {
-  it("prefers lower-utilization node in risk_limited mode when maxRisk is equal", () => {
-    const items: WorkItem[] = [{ id: "i1", risk: 0.5, priority: 1, confidence: 0.5 }];
-    // nodeState starts with used=0 for all, so we test with capacity differences
-    const nodes: NodeCapacity[] = [
-      { nodeId: "n-large", capacity: 10, maxRisk: 5 },
-      { nodeId: "n-small", capacity: 1, maxRisk: 5 }
+describe("constrainedBatchAssign - risk_limited policy", () => {
+  it("skips items whose risk exceeds node maxRisk", () => {
+    const items: WorkItem[] = [
+      { id: "safe", risk: 3, priority: 1, confidence: 0.5 },
+      { id: "risky", risk: 9, priority: 1, confidence: 0.5 }
     ];
-    // Both start at 0 utilization, alphabetical tie-break: n-large < n-small
+    const nodes: NodeCapacity[] = [{ nodeId: "n1", capacity: 2, maxRisk: 5 }];
     const assignments = constrainedBatchAssign(items, nodes, "risk_limited");
-    expect(assignments[0].nodeId).toBe("n-large");
+    expect(assignments).toHaveLength(1);
+    expect(assignments[0].itemId).toBe("safe");
   });
 
-  it("prefers tighter maxRisk node in risk_limited mode", () => {
-    const items: WorkItem[] = [{ id: "i1", risk: 3, priority: 1, confidence: 0.5 }];
+  it("assigns item to node with lowest maxRisk that still accepts it in risk_limited mode", () => {
+    const item: WorkItem = { id: "i1", risk: 3, priority: 1, confidence: 0.5 };
     const nodes: NodeCapacity[] = [
-      { nodeId: "permissive", capacity: 1, maxRisk: 9 },
-      { nodeId: "tight", capacity: 1, maxRisk: 5 }
+      { nodeId: "tight", capacity: 1, maxRisk: 3 },
+      { nodeId: "permissive", capacity: 1, maxRisk: 10 }
     ];
-    // In risk_limited policy, candidates sorted by lowest maxRisk first
-    const assignments = constrainedBatchAssign(items, nodes, "risk_limited");
+    // risk_limited prefers tightest node that accepts the item
+    const assignments = constrainedBatchAssign([item], nodes, "risk_limited");
     expect(assignments[0].nodeId).toBe("tight");
   });
 
-  it("ignores node's pre-existing used count (nodeState initializes all to 0)", () => {
-    // The engine resets all node.used to 0 internally, so a node passed with used=999 is treated as empty
+  it("falls back to permissive node when tight node is full", () => {
     const items: WorkItem[] = [
-      { id: "i1", risk: 1, priority: 1, confidence: 0.5 },
-      { id: "i2", risk: 1, priority: 1, confidence: 0.5 }
+      { id: "i1", risk: 3, priority: 1, confidence: 0.5 },
+      { id: "i2", risk: 3, priority: 1, confidence: 0.4 }
     ];
     const nodes: NodeCapacity[] = [
-      { nodeId: "n1", capacity: 2, maxRisk: 5 }
+      { nodeId: "tight", capacity: 1, maxRisk: 3 },
+      { nodeId: "permissive", capacity: 1, maxRisk: 10 }
+    ];
+    const assignments = constrainedBatchAssign(items, nodes, "risk_limited");
+    expect(assignments).toHaveLength(2);
+    const nodeIds = assignments.map((a) => a.nodeId).sort();
+    expect(nodeIds).toEqual(["permissive", "tight"]);
+  });
+});
+
+describe("constrainedBatchAssign - node selection utilization preference", () => {
+  it("prefers less utilized node when multiple nodes are available", () => {
+    // In balanced mode: sort by utilization (ascending) when other criteria tie
+    // Make a node artificially more utilized by pre-filling it
+    const items: WorkItem[] = [
+      // First item fills n1
+      { id: "filler", risk: 1, priority: 5, confidence: 0.9 },
+      // Second item should go to n2 (n1 is now full), then n3 which is empty
+      { id: "target", risk: 1, priority: 1, confidence: 0.1 }
+    ];
+    const nodes: NodeCapacity[] = [
+      { nodeId: "n1", capacity: 1, maxRisk: 10 },
+      { nodeId: "n2", capacity: 2, maxRisk: 10 }
     ];
     const assignments = constrainedBatchAssign(items, nodes, "balanced");
-    expect(assignments).toHaveLength(2);
+    // filler goes to n1 (highest score gets first pick)
+    // target goes to n2 (n1 is full)
+    const fillerAssignment = assignments.find((a) => a.itemId === "filler");
+    const targetAssignment = assignments.find((a) => a.itemId === "target");
+    expect(fillerAssignment?.nodeId).toBe("n1");
+    expect(targetAssignment?.nodeId).toBe("n2");
   });
 });

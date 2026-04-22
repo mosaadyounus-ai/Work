@@ -97,6 +97,32 @@ class TestRunScenario(unittest.TestCase):
         self.assertGreater(result.confidence_drift, 0.40)
         self.assertTrue(result.containment_triggered)
 
+    def test_outcome_is_outcome_dataclass(self):
+        s = Scenario("test", contamination=0.1, load=100, survivor_bias=0.0)
+        result = run_scenario(s)
+        self.assertIsInstance(result, Outcome)
+
+    def test_zero_contamination_zero_load_no_containment(self):
+        s = Scenario("clean", contamination=0.0, load=0, survivor_bias=0.0)
+        result = run_scenario(s)
+        self.assertEqual(result.measured_contamination, 0.0)
+        self.assertEqual(result.confidence_drift, 0.0)
+        self.assertFalse(result.containment_triggered)
+
+    def test_survivor_bias_equal_to_contamination_gives_zero_measured(self):
+        s = Scenario("neutral", contamination=0.25, load=0, survivor_bias=0.25)
+        result = run_scenario(s)
+        self.assertAlmostEqual(result.measured_contamination, 0.0)
+        self.assertFalse(result.containment_triggered)
+
+    def test_large_negative_survivor_bias_amplifies_measured_contamination(self):
+        # Negative survivor_bias increases measured contamination
+        s = Scenario("amplified", contamination=0.15, load=0, survivor_bias=-0.20)
+        result = run_scenario(s)
+        # measured = max(0, 0.15 - (-0.20)) = 0.35 > 0.30
+        self.assertAlmostEqual(result.measured_contamination, 0.35)
+        self.assertTrue(result.containment_triggered)
+
 
 class TestSimulate(unittest.TestCase):
     def test_simulate_returns_list_of_outcomes(self):
@@ -135,13 +161,41 @@ class TestSimulate(unittest.TestCase):
             Scenario("a", contamination=0.07, load=120, survivor_bias=0.01),
             Scenario("b", contamination=0.18, load=380, survivor_bias=0.02),
         ]
-        batch = simulate(scenarios)
-        individual = [run_scenario(s) for s in scenarios]
-        for b, i in zip(batch, individual):
-            self.assertEqual(b.name, i.name)
-            self.assertAlmostEqual(b.measured_contamination, i.measured_contamination)
-            self.assertAlmostEqual(b.confidence_drift, i.confidence_drift)
-            self.assertEqual(b.containment_triggered, i.containment_triggered)
+        batch_results = simulate(scenarios)
+        individual_results = [run_scenario(s) for s in scenarios]
+        for batch, individual in zip(batch_results, individual_results):
+            self.assertEqual(batch.name, individual.name)
+            self.assertAlmostEqual(batch.measured_contamination, individual.measured_contamination)
+            self.assertAlmostEqual(batch.confidence_drift, individual.confidence_drift)
+            self.assertEqual(batch.containment_triggered, individual.containment_triggered)
+
+    def test_simulate_with_generator_input(self):
+        # simulate accepts Iterable, so generators should work
+        def gen():
+            yield Scenario("gen1", contamination=0.1, load=100, survivor_bias=0.0)
+            yield Scenario("gen2", contamination=0.35, load=50, survivor_bias=0.0)
+
+        results = simulate(gen())
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results[0].name, "gen1")
+        self.assertEqual(results[1].name, "gen2")
+
+    def test_simulate_default_scenarios_all_produce_outcomes(self):
+        # Test the three canonical scenarios from main()
+        scenarios = [
+            Scenario("baseline", contamination=0.07, load=120, survivor_bias=0.01),
+            Scenario("overload", contamination=0.18, load=380, survivor_bias=0.02),
+            Scenario("survivor_bias_inversion", contamination=0.42, load=240, survivor_bias=-0.08),
+        ]
+        results = simulate(scenarios)
+        self.assertEqual(len(results), 3)
+
+        # baseline: no containment
+        self.assertFalse(results[0].containment_triggered)
+        # overload: containment via confidence drift
+        self.assertTrue(results[1].containment_triggered)
+        # survivor_bias_inversion: containment via measured contamination
+        self.assertTrue(results[2].containment_triggered)
 
 
 if __name__ == "__main__":
