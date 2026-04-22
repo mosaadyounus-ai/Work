@@ -1,0 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;600;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-chorus-primary: #00f5d4;
+  --color-chorus-secondary: #0ea5e9;
+  --color-chorus-danger: #ef4444;
+  --color-chorus-bg: #05070a;
+  --color-chorus-surface: rgba(255, 255, 255, 0.05);
+  --color-chorus-glass: rgba(255, 255, 255, 0.05);
+  --color-chorus-glass-border: rgba(255, 255, 255, 0.1);
+}
+
+@layer base {
+  body {
+    @apply bg-chorus-bg text-white font-sans antialiased overflow-hidden;
+  }
+}
+
+@layer utilities {
+  .lattice-bg {
+    @apply absolute inset-0 z-0 pointer-events-none;
+    background: 
+      radial-gradient(circle at center, rgba(6, 182, 212, 0.1) 0%, transparent 70%),
+      linear-gradient(rgba(0, 245, 212, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 245, 212, 0.05) 1px, transparent 1px);
+    background-size: auto, 40px 40px, 40px 40px;
+  }
+
+  .glass-panel {
+    @apply bg-chorus-glass backdrop-blur-md border border-chorus-glass-border rounded-lg shadow-xl;
+  }
+  
+  .glow-text {
+    text-shadow: 0 0 10px rgba(0, 245, 212, 0.4);
+  }
+  
+  .glow-border {
+    @apply border-chorus-primary/30 shadow-[0_0_20px_rgba(0,245,212,0.1)];
+  }
+
+  .tech-corner {
+    background: 
+      linear-gradient(to right, var(--color-chorus-primary) 1.5px, transparent 1.5px) 0 0,
+      linear-gradient(to bottom, var(--color-chorus-primary) 1.5px, transparent 1.5px) 0 0,
+      linear-gradient(to left, var(--color-chorus-primary) 1.5px, transparent 1.5px) 100% 100%,
+      linear-gradient(to top, var(--color-chorus-primary) 1.5px, transparent 1.5px) 100% 100%;
+    background-repeat: no-repeat;
+    background-size: 6px 6px;
+  }
+}
+

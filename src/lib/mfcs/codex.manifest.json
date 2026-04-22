@@ -1,0 +1,7 @@
+{
+  "name": "mfcs-core",
+  "version": "5.0.0",
+  "invariants": ["T1","T2","T3","M1","M2","M3","M4","M5"],
+  "schema_strict": true,
+  "external_dependencies": false
+}
