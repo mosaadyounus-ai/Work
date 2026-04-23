@@ -21,35 +21,26 @@ export type Analysis = {
   basins: Basin[];
 };
 
-function canonicalAttractorKey(history: string[], window = 5): string {
-  const cycle = history.slice(-window);
-  const rotations = cycle.map((_, index) => [
-    ...cycle.slice(index),
-    ...cycle.slice(0, index)
-  ]);
-  return rotations
-    .map((candidate) => candidate.join("->"))
-    .sort((left, right) => left.localeCompare(right))[0] ?? "";
-}
-
 function mapBasins(simulations: SimulationRecord[]): Basin[] {
   const buckets = new Map<string, string[]>();
 
   for (const simulation of simulations) {
-    if (simulation.result.type !== "ATTRACTOR") {
+    if (simulation.result.type !== "ATTRACTOR" || !simulation.result.attractor_id) {
       continue;
     }
 
-    const key = canonicalAttractorKey(simulation.result.state.history);
+    const key = simulation.result.attractor_id;
     const members = buckets.get(key) ?? [];
     buckets.set(key, [...members, simulation.start]);
   }
 
-  return [...buckets.entries()].map(([attractorKey, members]) => ({
-    attractorKey,
-    members: [...members].sort(),
-    size: members.length
-  }));
+  return [...buckets.entries()]
+    .sort((left, right) => left[0].localeCompare(right[0]))
+    .map(([attractorKey, members]) => ({
+      attractorKey,
+      members: [...members].sort((a, b) => a.localeCompare(b)),
+      size: members.length
+    }));
 }
 
 export function runFullAnalysis(nodes: Node[]): Analysis {
@@ -59,26 +50,12 @@ export function runFullAnalysis(nodes: Node[]): Analysis {
   const adjacency = buildAdjacency(edges);
   const nodeMap = new Map(nodes.map((node) => [node.node_id, node]));
 
-  const simulations = nodes.map((node) => {
-    if (node.dormant) {
-      return {
-        start: node.node_id,
-        result: {
-          type: "TRANSIENT" as const,
-          state: {
-            current: node.node_id,
-            steps: 0,
-            history: [node.node_id]
-          },
-          steps: 0,
-          stability: 0
-        }
-      };
-    }
-
-    const result = simulate(node.node_id, adjacency, nodeMap);
-    return { start: node.node_id, result };
-  });
+  const simulations = nodes
+    .map((node) => ({
+      start: node.node_id,
+      result: simulate(node.node_id, adjacency, nodeMap)
+    }))
+    .sort((left, right) => left.start.localeCompare(right.start));
 
   const basins = mapBasins(simulations);
 

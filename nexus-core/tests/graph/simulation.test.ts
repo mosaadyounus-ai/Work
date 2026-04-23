@@ -12,18 +12,19 @@ describe("simulate", () => {
       { node_id: "C05", x: 90, y: 50, weight: 0.9, dormant: false }
     ];
 
-    const adj = new Map<string, string[]>([
-      ["C01", ["C02"]],
-      ["C02", ["C03"]],
-      ["C03", ["C04"]],
-      ["C04", ["C05"]],
-      ["C05", ["C01"]]
+    const adj = new Map([
+      ["C01", [{ from: "C01", to: "C02", weight: 0.9 }]],
+      ["C02", [{ from: "C02", to: "C03", weight: 0.9 }]],
+      ["C03", [{ from: "C03", to: "C04", weight: 0.9 }]],
+      ["C04", [{ from: "C04", to: "C05", weight: 0.9 }]],
+      ["C05", [{ from: "C05", to: "C01", weight: 0.9 }]]
     ]);
 
     const nodeMap = new Map(nodes.map((node) => [node.node_id, node]));
     const result = simulate("C01", adj, nodeMap);
 
     expect(result.type).toBe("ATTRACTOR");
+    expect(result.attractor_id).toBe("C01");
     expect(result.steps).toBeGreaterThan(0);
     expect(result.stability).toBeGreaterThan(0);
   });

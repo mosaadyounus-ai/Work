@@ -3,52 +3,68 @@ import type { Node } from "./parseNodeMap.js";
 export type Edge = {
   from: string;
   to: string;
+  weight: number;
 };
 
-function distance(a: Node, b: Node): number {
-  const dx = a.x - b.x;
-  const dy = a.y - b.y;
-  return Math.sqrt(dx * dx + dy * dy);
+function idNum(nodeId: string): number {
+  const numeric = Number(nodeId.replace(/\D/g, ""));
+  return Number.isFinite(numeric) ? numeric : Number.MAX_SAFE_INTEGER;
 }
 
 export function generateEdges(nodes: Node[]): Edge[] {
-  const activeNodes = nodes
-    .filter((node) => !node.dormant)
-    .sort((left, right) => left.node_id.localeCompare(right.node_id));
-
   const edges: Edge[] = [];
+  const activeNodes = nodes.filter((node) => !node.dormant);
 
-  for (let index = 0; index < activeNodes.length; index += 1) {
-    const node = activeNodes[index];
-    const ringNeighbor = activeNodes[(index + 1) % activeNodes.length];
-
-    if (ringNeighbor && ringNeighbor.node_id !== node.node_id) {
-      edges.push({ from: node.node_id, to: ringNeighbor.node_id });
+  for (const node of nodes) {
+    if (node.dormant) {
+      continue;
     }
 
-    const strongestNeighbor = activeNodes
+    const candidates = activeNodes
       .filter((candidate) => candidate.node_id !== node.node_id)
       .sort((left, right) => {
+        const distanceDelta =
+          Math.abs(idNum(node.node_id) - idNum(left.node_id)) -
+          Math.abs(idNum(node.node_id) - idNum(right.node_id));
+        if (distanceDelta !== 0) {
+          return distanceDelta;
+        }
+
         const weightDelta = right.weight - left.weight;
         if (weightDelta !== 0) {
           return weightDelta;
         }
 
-        const leftDistance = distance(node, left);
-        const rightDistance = distance(node, right);
-        if (leftDistance !== rightDistance) {
-          return leftDistance - rightDistance;
-        }
-
         return left.node_id.localeCompare(right.node_id);
-      })[0];
+      })
+      .slice(0, 2);
 
-    if (strongestNeighbor && strongestNeighbor.node_id !== ringNeighbor?.node_id) {
-      edges.push({ from: node.node_id, to: strongestNeighbor.node_id });
+    for (const candidate of candidates) {
+      if (candidate.dormant) {
+        continue;
+      }
+
+      edges.push({
+        from: node.node_id,
+        to: candidate.node_id,
+        weight: Number(((node.weight + candidate.weight) / 2).toFixed(4))
+      });
     }
   }
 
-  return edges;
+  return edges.sort((left, right) => {
+    const fromDelta = left.from.localeCompare(right.from);
+    if (fromDelta !== 0) {
+      return fromDelta;
+    }
+
+    const toDelta = left.to.localeCompare(right.to);
+    if (toDelta !== 0) {
+      return toDelta;
+    }
+
+    return right.weight - left.weight;
+  });
 }
 
 export function validateEdges(edges: Edge[], nodes: Node[]): void {
@@ -62,6 +78,10 @@ export function validateEdges(edges: Edge[], nodes: Node[]): void {
       throw new Error(`Edge references unknown node: ${edge.from} -> ${edge.to}`);
     }
 
+    if (dormantIds.has(edge.from)) {
+      throw new Error(`Dormant node has outgoing edge: ${edge.from}`);
+    }
+
     if (dormantIds.has(edge.to)) {
       throw new Error(`Dormant node is reachable: ${edge.to}`);
     }
@@ -72,11 +92,22 @@ export function validateEdges(edges: Edge[], nodes: Node[]): void {
   }
 }
 
-export function buildAdjacency(edges: Edge[]): Map<string, string[]> {
-  const adjacency = new Map<string, string[]>();
+export function buildAdjacency(edges: Edge[]): Map<string, Edge[]> {
+  const adjacency = new Map<string, Edge[]>();
   for (const edge of edges) {
     const existing = adjacency.get(edge.from) ?? [];
-    adjacency.set(edge.from, [...existing, edge.to]);
+    adjacency.set(edge.from, [...existing, edge]);
   }
+
+  for (const [key, candidates] of adjacency.entries()) {
+    const sorted = [...candidates].sort((left, right) => {
+      if (right.weight !== left.weight) {
+        return right.weight - left.weight;
+      }
+      return left.to.localeCompare(right.to);
+    });
+    adjacency.set(key, sorted);
+  }
+
   return adjacency;
 }

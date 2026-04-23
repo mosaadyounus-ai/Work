@@ -46,378 +46,182 @@
   "edges": [
     {
       "from": "C01",
-      "to": "D01"
+      "to": "D01",
+      "weight": 0.825
+    },
+    {
+      "from": "C01",
+      "to": "P01",
+      "weight": 0.8
     },
     {
       "from": "D01",
-      "to": "L01"
+      "to": "C01",
+      "weight": 0.825
     },
     {
       "from": "D01",
-      "to": "C01"
+      "to": "P01",
+      "weight": 0.675
     },
     {
       "from": "L01",
-      "to": "P01"
+      "to": "C01",
+      "weight": 0.775
     },
     {
       "from": "L01",
-      "to": "C01"
+      "to": "D01",
+      "weight": 0.65
     },
     {
       "from": "P01",
-      "to": "R01"
+      "to": "C01",
+      "weight": 0.8
     },
     {
       "from": "P01",
-      "to": "C01"
+      "to": "D01",
+      "weight": 0.675
     },
     {
       "from": "R01",
-      "to": "C01"
+      "to": "C01",
+      "weight": 0.75
+    },
+    {
+      "from": "R01",
+      "to": "D01",
+      "weight": 0.625
     }
   ],
   "simulations": [
     {
-      "start": "C01",
-      "result": {
-        "type": "TRANSIENT",
-        "state": {
-          "current": "C01",
-          "steps": 50,
-          "history": [
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01"
-          ]
-        },
-        "steps": 50,
-        "stability": 0.9608
-      }
-    },
-    {
-      "start": "P01",
-      "result": {
-        "type": "TRANSIENT",
-        "state": {
-          "current": "D01",
-          "steps": 50,
-          "history": [
-            "P01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01"
-          ]
-        },
-        "steps": 50,
-        "stability": 0.9412
-      }
-    },
-    {
-      "start": "D01",
-      "result": {
-        "type": "TRANSIENT",
-        "state": {
-          "current": "D01",
-          "steps": 50,
-          "history": [
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01"
-          ]
-        },
-        "steps": 50,
-        "stability": 0.9608
-      }
-    },
-    {
-      "start": "L01",
-      "result": {
-        "type": "TRANSIENT",
-        "state": {
-          "current": "D01",
-          "steps": 50,
-          "history": [
-            "L01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01"
-          ]
-        },
-        "steps": 50,
-        "stability": 0.9412
-      }
-    },
-    {
-      "start": "R01",
-      "result": {
-        "type": "TRANSIENT",
-        "state": {
-          "current": "D01",
-          "steps": 50,
-          "history": [
-            "R01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01",
-            "C01",
-            "D01"
-          ]
-        },
-        "steps": 50,
-        "stability": 0.9412
-      }
-    },
-    {
       "start": "B01",
       "result": {
-        "type": "TRANSIENT",
+        "type": "DORMANT",
+        "steps": 0,
+        "stability": 0,
         "state": {
           "current": "B01",
           "steps": 0,
           "history": [
             "B01"
           ]
-        },
-        "steps": 0,
-        "stability": 0
+        }
+      }
+    },
+    {
+      "start": "C01",
+      "result": {
+        "type": "ATTRACTOR",
+        "attractor_id": "C01",
+        "steps": 2,
+        "stability": 0.95,
+        "state": {
+          "current": "C01",
+          "steps": 2,
+          "history": [
+            "C01",
+            "D01",
+            "C01"
+          ]
+        }
+      }
+    },
+    {
+      "start": "D01",
+      "result": {
+        "type": "ATTRACTOR",
+        "attractor_id": "D01",
+        "steps": 2,
+        "stability": 0.7,
+        "state": {
+          "current": "D01",
+          "steps": 2,
+          "history": [
+            "D01",
+            "C01",
+            "D01"
+          ]
+        }
+      }
+    },
+    {
+      "start": "L01",
+      "result": {
+        "type": "ATTRACTOR",
+        "attractor_id": "C01",
+        "steps": 3,
+        "stability": 0.95,
+        "state": {
+          "current": "C01",
+          "steps": 3,
+          "history": [
+            "L01",
+            "C01",
+            "D01",
+            "C01"
+          ]
+        }
+      }
+    },
+    {
+      "start": "P01",
+      "result": {
+        "type": "ATTRACTOR",
+        "attractor_id": "C01",
+        "steps": 3,
+        "stability": 0.95,
+        "state": {
+          "current": "C01",
+          "steps": 3,
+          "history": [
+            "P01",
+            "C01",
+            "D01",
+            "C01"
+          ]
+        }
+      }
+    },
+    {
+      "start": "R01",
+      "result": {
+        "type": "ATTRACTOR",
+        "attractor_id": "C01",
+        "steps": 3,
+        "stability": 0.95,
+        "state": {
+          "current": "C01",
+          "steps": 3,
+          "history": [
+            "R01",
+            "C01",
+            "D01",
+            "C01"
+          ]
+        }
       }
     }
   ],
-  "basins": []
+  "basins": [
+    {
+      "attractorKey": "C01",
+      "members": [
+        "C01",
+        "L01",
+        "P01",
+        "R01"
+      ],
+      "size": 4
+    },
+    {
+      "attractorKey": "D01",
+      "members": [
+        "D01"
+      ],
+      "size": 1
+    }
+  ]
 }
