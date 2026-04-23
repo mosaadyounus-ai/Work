@@ -8,7 +8,7 @@ State-authoritative, deterministic core engine for Nexus behaviors.
 - `npm run dev` - Run demo loop with tsx
 - `npm run start` - Run built demo from `dist`
 - `npm test` - Execute tests with Vitest
-- `npm run analyze` - Run full graph analysis and export `analysis.json`
+- `npm run analyze` - Run full graph analysis and export `analysis.json` + `analysis.sha256`
 
 ## Unified analysis pipeline
 
@@ -19,8 +19,9 @@ exportAnalysis(analysis);
 ```
 
 ```py
+verify_analysis()
 analysis = load_analysis()
 visualize_full_system(analysis)
 ```
 
-Python glue helpers live in `python/visualize_full_system.py`.
+Python glue helpers (including checksum verification) live in `python/visualize_full_system.py`.
