@@ -7,3 +7,4 @@ export * from "./core/graph/edges.js";
 export * from "./core/graph/basinMapping.js";
 export * from "./core/graph/pipeline.js";
 export * from "./core/graph/exportAnalysis.js";
+export * from "./core/graph/worldDrift.js";
