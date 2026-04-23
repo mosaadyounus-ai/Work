@@ -1,3 +1,4 @@
+import hashlib
 import json
 from typing import Any
 
@@ -5,6 +6,20 @@ from typing import Any
 def load_analysis(path: str = "analysis.json") -> dict[str, Any]:
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def verify_analysis(analysis_path: str = "analysis.json", checksum_path: str = "analysis.sha256") -> str:
+    with open(analysis_path, "rb") as f:
+        data = f.read()
+    with open(checksum_path, "r", encoding="utf-8") as f:
+        expected = f.read().split()[0]
+
+    actual = hashlib.sha256(data).hexdigest()
+    if actual != expected:
+        raise ValueError("Hash mismatch!")
+
+    print(f"✔ Verified: {actual}")
+    return actual
 
 
 def build_simulation_paths(simulations: list[dict[str, Any]]) -> list[list[str]]:
@@ -39,5 +54,6 @@ def visualize_full_system(analysis: dict[str, Any]) -> None:
 
 
 if __name__ == "__main__":
+    verify_analysis()
     analysis_data = load_analysis()
     visualize_full_system(analysis_data)
