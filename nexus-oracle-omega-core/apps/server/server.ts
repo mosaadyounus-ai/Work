@@ -4,11 +4,13 @@ import { WebSocketServer, WebSocket } from "ws";
 import path from "path";
 import http from "http";
 import { createHash } from "crypto";
+import type { Span } from "@opentelemetry/api";
 import { processSignals } from "../../src/lib/engine";
 import { signals as seedSignals } from "../../src/lib/signals";
 import { fetchMarketSignals, fetchNewsSignals, normalizeSignals, getResilienceState } from "../../src/lib/connectors";
 import { Signal, ProcessedSignal, PlateId, OperatorState, CodexStep, TraceAnnotation, GuardrailEvent, PathState, StateHash } from "../../src/lib/types";
 import { runKernelDiagnostics } from "../../src/lib/mfcs/kernel.test";
+import { annotateSpan, withActiveSpan } from "../../src/lib/telemetry/tracing";
 import {
   buildRTTSEvidence,
   evaluateControlKernel,
@@ -75,6 +77,26 @@ let operatorState: OperatorState = {
   },
   updatedAt: Date.now()
 };
+
+async function runTracedRequest(
+  name: string,
+  req: express.Request,
+  res: express.Response,
+  handler: (span: Span) => Promise<void> | void,
+) {
+  try {
+    await withActiveSpan(name, {
+      "http.method": req.method,
+      "http.route": req.route?.path ?? req.path,
+      "http.url": req.originalUrl,
+    }, handler);
+  } catch (error) {
+    console.error(`[TRACE_ERR] ${name} failed:`, error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+}
 
 // Static Guardrail Definitions
 const guardrailChecks = [
@@ -474,88 +496,145 @@ async function startServer() {
 
   // API Routes
   app.get("/api/health", (req, res) => {
-    res.json({ 
-      status: "ok", 
-      version: "1.5.0-omega",
-      telemetry: {
-        uptime: process.uptime(),
-        memory: process.memoryUsage().rss,
-        engineStatus: operatorState.engine.status
-      }
+    void runTracedRequest("http.health", req, res, (span) => {
+      annotateSpan(span, {
+        "omega.engine.status": operatorState.engine.status,
+        "omega.memory.rss": process.memoryUsage().rss,
+        "omega.uptime_seconds": process.uptime(),
+      });
+      res.json({ 
+        status: "ok", 
+        version: "1.5.0-omega",
+        telemetry: {
+          uptime: process.uptime(),
+          memory: process.memoryUsage().rss,
+          engineStatus: operatorState.engine.status
+        }
+      });
     });
   });
 
   app.get("/api/state", (req, res) => {
-    res.json(operatorState);
+    void runTracedRequest("http.state", req, res, (span) => {
+      annotateSpan(span, {
+        "omega.tick": operatorState.tick,
+        "omega.focus_mode": operatorState.ui.focusMode,
+      });
+      res.json(operatorState);
+    });
   });
 
   app.get("/api/codex/annotations", (req, res) => {
-    res.json(operatorState.annotations);
+    void runTracedRequest("http.annotations.list", req, res, (span) => {
+      annotateSpan(span, { "omega.annotations.count": operatorState.annotations.length });
+      res.json(operatorState.annotations);
+    });
   });
 
   app.get("/api/codex/guardrails/events", (req, res) => {
-    res.json(operatorState.guardrailEvents);
+    void runTracedRequest("http.guardrails.events", req, res, (span) => {
+      annotateSpan(span, { "omega.guardrails.count": operatorState.guardrailEvents.length });
+      res.json(operatorState.guardrailEvents);
+    });
   });
 
   app.get("/api/stability/hashes", (req, res) => {
-    res.json(hashBuffer);
+    void runTracedRequest("http.stability.hashes", req, res, (span) => {
+      annotateSpan(span, { "omega.hashes.count": hashBuffer.length });
+      res.json(hashBuffer);
+    });
   });
 
   app.get("/api/stability/snapshots", (req, res) => {
-    res.json(Array.from(snapshots.keys()));
+    void runTracedRequest("http.stability.snapshots", req, res, (span) => {
+      annotateSpan(span, { "omega.snapshots.count": snapshots.size });
+      res.json(Array.from(snapshots.keys()));
+    });
   });
 
   const handleKernelEvaluate = (req: express.Request, res: express.Response) => {
-    const input = normalizeKernelInput(req.body);
-    res.json(evaluateControlKernel(input));
+    void runTracedRequest("chorus.kernel.evaluate", req, res, (span) => {
+      const input = normalizeKernelInput(req.body);
+      const result = evaluateControlKernel(input);
+      annotateSpan(span, {
+        "chorus.queue_depth": input.queueDepth,
+        "chorus.queue_threshold": input.queueThreshold,
+        "chorus.reliability_correlation": input.reliabilityCorrelation,
+        "chorus.fallback_correlation": input.fallbackCorrelation,
+        "chorus.mode": result.mode,
+        "chorus.manual_audit_required": result.manualAuditRequired,
+      });
+      res.json(result);
+    });
   };
 
   app.post("/api/chorus/kernel/evaluate", handleKernelEvaluate);
   app.post("/chorus-api/kernel/evaluate", handleKernelEvaluate);
 
   const handleAssignmentPlan = (req: express.Request, res: express.Response) => {
-    const body = req.body as Partial<AssignmentRequest> | undefined;
-    const modeState =
-      body?.modeState ??
-      evaluateControlKernel(
-        normalizeKernelInput({
-          queueDepth: body?.arbiters?.length ? body.arbiters.length * 18 : 96,
-          queueThreshold: 120,
-          reliabilityCorrelation: 0.24,
-          fallbackCorrelation: 0.12,
-          stressSignal: false,
-        }),
-      );
+    void runTracedRequest("chorus.assignment.plan", req, res, (span) => {
+      const body = req.body as Partial<AssignmentRequest> | undefined;
+      const modeState =
+        body?.modeState ??
+        evaluateControlKernel(
+          normalizeKernelInput({
+            queueDepth: body?.arbiters?.length ? body.arbiters.length * 18 : 96,
+            queueThreshold: 120,
+            reliabilityCorrelation: 0.24,
+            fallbackCorrelation: 0.12,
+            stressSignal: false,
+          }),
+        );
 
-    const request: AssignmentRequest = {
-      arbiters: normalizeArbiters(body?.arbiters),
-      batchSize: Math.max(1, toFiniteNumber(body?.batchSize, 3)),
-      modeState,
-      seed: body?.seed,
-    };
+      const request: AssignmentRequest = {
+        arbiters: normalizeArbiters(body?.arbiters),
+        batchSize: Math.max(1, toFiniteNumber(body?.batchSize, 3)),
+        modeState,
+        seed: body?.seed,
+      };
 
-    res.json(planAssignments(request));
+      const plan = planAssignments(request);
+      annotateSpan(span, {
+        "chorus.mode": modeState.mode,
+        "chorus.assignment.batch_size": request.batchSize,
+        "chorus.assignment.arbiters": request.arbiters.length,
+        "chorus.assignment.generated": plan.assignments.length,
+      });
+
+      res.json(plan);
+    });
   };
 
   app.post("/api/chorus/assignment/plan", handleAssignmentPlan);
   app.post("/chorus-api/assignment/plan", handleAssignmentPlan);
 
   const handleRTTSContamination = (req: express.Request, res: express.Response) => {
-    const input = normalizeKernelInput(req.body);
-    const arbiters = normalizeArbiters(req.body?.arbiters);
-    const summary = summarizeContamination(
-      input.reliabilityCorrelation,
-      input.fallbackCorrelation,
-    );
-    const signalState = summary.contaminated
-      ? "contaminated"
-      : input.stressSignal
-        ? "stress"
-        : "clean";
+    void runTracedRequest("chorus.rtts.simulate_contamination", req, res, (span) => {
+      const input = normalizeKernelInput(req.body);
+      const arbiters = normalizeArbiters(req.body?.arbiters);
+      const summary = summarizeContamination(
+        input.reliabilityCorrelation,
+        input.fallbackCorrelation,
+      );
+      const signalState = summary.contaminated
+        ? "contaminated"
+        : input.stressSignal
+          ? "stress"
+          : "clean";
 
-    res.json({
-      summary,
-      evidence: arbiters.map((arbiter) => buildRTTSEvidence(arbiter, signalState)),
+      const evidence = arbiters.map((arbiter) => buildRTTSEvidence(arbiter, signalState));
+      annotateSpan(span, {
+        "chorus.arbiters.count": arbiters.length,
+        "chorus.reliability_correlation": input.reliabilityCorrelation,
+        "chorus.fallback_correlation": input.fallbackCorrelation,
+        "chorus.contamination.severity": summary.severity,
+        "chorus.contaminated": summary.contaminated,
+      });
+
+      res.json({
+        summary,
+        evidence,
+      });
     });
   };
 
@@ -564,14 +643,23 @@ async function startServer() {
   app.post("/chorus-api/rtts/simulate-contamination", handleRTTSContamination);
 
   app.post("/api/codex/annotations", (req, res) => {
-    const annotation: TraceAnnotation = {
-      id: `ann-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      author: "MOHAMMAD",
-      ...req.body
-    };
-    operatorState.annotations.unshift(annotation);
-    res.status(201).json(annotation);
+    void runTracedRequest("codex.annotation.create", req, res, (span) => {
+      const annotation: TraceAnnotation = {
+        id: `ann-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        author: "MOHAMMAD",
+        signalId: req.body?.signalId ?? "manual",
+        label: req.body?.label ?? "Manual annotation",
+        note: req.body?.note ?? "",
+        severity: req.body?.severity ?? "INFO",
+      };
+      operatorState.annotations.unshift(annotation);
+      annotateSpan(span, {
+        "codex.annotation.severity": annotation.severity,
+        "codex.annotations.count": operatorState.annotations.length,
+      });
+      res.status(201).json(annotation);
+    });
   });
 
   // Explicitly create HTTP server early
@@ -655,64 +743,79 @@ async function startServer() {
 
   async function updateCycle() {
     try {
-      const [mkt, news] = await Promise.all([fetchMarketSignals(), fetchNewsSignals()]);
-      const combined = normalizeSignals([...currentSignals, ...mkt, ...news]);
-      currentSignals = combined.sort((a, b) => 
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-      ).slice(0, 11);
+      await withActiveSpan("omega.update_cycle", {
+        "omega.tick": operatorState.tick,
+        "omega.current_signals.count": currentSignals.length,
+      }, async (span) => {
+        const [mkt, news] = await Promise.all([fetchMarketSignals(), fetchNewsSignals()]);
+        const combined = normalizeSignals([...currentSignals, ...mkt, ...news]);
+        currentSignals = combined.sort((a, b) => 
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        ).slice(0, 11);
 
-      lastProcessed = processSignals(currentSignals, lastProcessed);
+        lastProcessed = processSignals(currentSignals, lastProcessed);
+        let guardrailViolations = 0;
 
-      // Create Codex Steps
-      lastProcessed.forEach(p => {
-        if (p.codex_alignment) {
-           const step: CodexStep = {
-             id: `step-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-             timestamp: new Date().toISOString(),
-             plateId: p.codex_alignment,
-             plateName: `Plate_${p.codex_alignment}`,
-             operator: operatorState.operatorId,
-             signalId: p.id,
-             metrics: {
-               stability: p.score,
-               risk: p.risk,
-               momentum: p.momentum
-             }
-           };
-           operatorState.steps.unshift(step);
-           operatorState.currentSignal = p;
+        // Create Codex Steps
+        lastProcessed.forEach(p => {
+          if (p.codex_alignment) {
+             const step: CodexStep = {
+               id: `step-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+               timestamp: new Date().toISOString(),
+               plateId: p.codex_alignment,
+               plateName: `Plate_${p.codex_alignment}`,
+               operator: operatorState.operatorId,
+               signalId: p.id,
+               metrics: {
+                 stability: p.score,
+                 risk: p.risk,
+                 momentum: p.momentum
+               }
+             };
+             operatorState.steps.unshift(step);
+             operatorState.currentSignal = p;
 
-           // Guardrails
-           guardrailChecks.forEach(check => {
-             const result = check(step);
-             if (result.violated && result.guardrailId) {
-                operatorState.guardrailEvents.unshift({
-                  id: `ge-${Date.now()}`,
-                  timestamp: new Date().toISOString(),
-                  guardrailId: result.guardrailId,
-                  severity: "HIGH",
-                  reason: result.reason || "VIOLATION",
-                  step: step
-                });
-             }
-           });
-        }
+             // Guardrails
+             guardrailChecks.forEach(check => {
+               const result = check(step);
+               if (result.violated && result.guardrailId) {
+                  guardrailViolations += 1;
+                  operatorState.guardrailEvents.unshift({
+                    id: `ge-${Date.now()}`,
+                    timestamp: new Date().toISOString(),
+                    guardrailId: result.guardrailId,
+                    severity: "HIGH",
+                    reason: result.reason || "VIOLATION",
+                    step: step
+                  });
+               }
+             });
+          }
+        });
+
+        operatorState.steps = operatorState.steps.slice(0, 50);
+        operatorState.guardrailEvents = operatorState.guardrailEvents.slice(0, 100);
+
+        // Plate Analysis (Nexus OMEGA Continued Logic)
+        const counts: Record<PlateId, number> = { "I": 0, "II": 0, "III": 0, "IV": 0, "V": 0, "VI": 0, "VII": 0, "VIII": 0, "IX": 0 };
+        lastProcessed.forEach(p => {
+          if (p.codex_alignment) {
+            counts[p.codex_alignment]++;
+          }
+        });
+        operatorState.plateCounts = counts;
+
+        annotateSpan(span, {
+          "omega.market_signals.count": mkt.length,
+          "omega.news_signals.count": news.length,
+          "omega.processed_signals.count": lastProcessed.length,
+          "omega.steps.count": operatorState.steps.length,
+          "omega.guardrail_violations.count": guardrailViolations,
+        });
+
+        syncOperatorState(lastProcessed);
+        broadcast();
       });
-
-      operatorState.steps = operatorState.steps.slice(0, 50);
-      operatorState.guardrailEvents = operatorState.guardrailEvents.slice(0, 100);
-
-      // Plate Analysis (Nexus OMEGA Continued Logic)
-      const counts: Record<PlateId, number> = { "I": 0, "II": 0, "III": 0, "IV": 0, "V": 0, "VI": 0, "VII": 0, "VIII": 0, "IX": 0 };
-      lastProcessed.forEach(p => {
-        if (p.codex_alignment) {
-          counts[p.codex_alignment]++;
-        }
-      });
-      operatorState.plateCounts = counts;
-
-      syncOperatorState(lastProcessed);
-      broadcast();
     } catch (err) {
       console.error("[OMEGA_ERR] Cycle failed:", err);
     }
