@@ -1,22 +1,21 @@
 import fs from "node:fs";
-import path from "node:path";
 import type { FullAnalysis } from "./pipeline.js";
-import { sha256Hex, stableStringify } from "./hash.js";
+import { sha256 } from "./hash.js";
+import { stableStringify } from "./stableStringify.js";
 
-export type ExportResult = {
-  outputPath: string;
-  hashPath: string;
-  hash: string;
-};
+export function exportAnalysis(analysis: FullAnalysis, outputPath = "./analysis.json"): string {
+  const json = stableStringify(analysis);
+  const hash = sha256(json);
+  const hashPath = outputPath.endsWith(".json")
+    ? `${outputPath.slice(0, -".json".length)}.sha256`
+    : `${outputPath}.sha256`;
+  const fileName = outputPath.split("/").at(-1) ?? "analysis.json";
 
-export function exportAnalysis(analysis: FullAnalysis, outputPath = "./analysis.json"): ExportResult {
-  const serialized = stableStringify(analysis);
-  fs.writeFileSync(outputPath, `${serialized}\n`);
-
-  const hash = sha256Hex(`${serialized}\n`);
-  const hashPath = `${outputPath}.sha256`;
-  const fileName = path.basename(outputPath);
+  fs.writeFileSync(outputPath, json);
   fs.writeFileSync(hashPath, `${hash}  ${fileName}\n`);
 
-  return { outputPath, hashPath, hash };
+  console.log("✔ analysis.json written");
+  console.log("🔒 SHA-256:", hash);
+
+  return hash;
 }
