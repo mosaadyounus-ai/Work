@@ -1,0 +1,506 @@
+[
+  {
+    "vector": {
+      "env": "prod",
+      "mode": "sync",
+      "risk": "low",
+      "auth": "none",
+      "decision": "reject"
+    },
+    "decision": "reject",
+    "proof": {
+      "hash": "46cdc6d2cc30577f3400e7017ca74231ff133bea02415abd9485dedd71c15317",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "prod",
+      "mode": "sync",
+      "risk": "low",
+      "auth": "user",
+      "decision": "reject"
+    },
+    "decision": "reject",
+    "proof": {
+      "hash": "1bb87703efb43e7ae49e3e199c0a95a8f99deb29002536a77f2acfeb89d89885",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "prod",
+      "mode": "sync",
+      "risk": "low",
+      "auth": "admin",
+      "decision": "bypass"
+    },
+    "decision": "bypass",
+    "proof": {
+      "hash": "4fd796deeba9025b12b9e5585c46f1886386588d45553652817633e4fde0eee3",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "prod",
+      "mode": "sync",
+      "risk": "medium",
+      "auth": "none",
+      "decision": "reject"
+    },
+    "decision": "reject",
+    "proof": {
+      "hash": "63400436778b0643f94196aa26b81ec1c73366d1b7cd23b62e72b10dc6daf502",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "prod",
+      "mode": "sync",
+      "risk": "medium",
+      "auth": "user",
+      "decision": "reject"
+    },
+    "decision": "reject",
+    "proof": {
+      "hash": "d5751e313dbbf28584a5610db0857234962064ee3278a659f75926900b1777d2",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "prod",
+      "mode": "sync",
+      "risk": "medium",
+      "auth": "admin",
+      "decision": "reject"
+    },
+    "decision": "reject",
+    "proof": {
+      "hash": "f5d7f4472ffca3a027da9c3116523e6691270ecbbabd037546245e9d9c34e676",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "prod",
+      "mode": "sync",
+      "risk": "high",
+      "auth": "none",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "9706cab5bb1ab86f7c1e7c8ef18bee2c91e82bdd46d7c6458247a59dce2eb1a6",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "prod",
+      "mode": "sync",
+      "risk": "high",
+      "auth": "user",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "4025327f4b216f0307255b770a2e0d59ab1cdc7dd80966b4e436bd48eae795fe",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "prod",
+      "mode": "sync",
+      "risk": "high",
+      "auth": "admin",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "9a463417dd6423f74b21b561c489e6e9e08d9f74090a9315c4359abd9fd3f0c4",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "prod",
+      "mode": "streaming",
+      "risk": "low",
+      "auth": "none",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "46e02e95f2a028e750008cacdb9236c7f30b0d58908672c443b5d808e350ee05",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "prod",
+      "mode": "streaming",
+      "risk": "low",
+      "auth": "user",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "c718484405930a779f5a82e8dc5158886bcda7d92963724e5e4971f9cd93f618",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "prod",
+      "mode": "streaming",
+      "risk": "low",
+      "auth": "admin",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "013dcfd5ebe852910e45f4468d66dd5b8f1a9b330dec1798414cb4ac471dd374",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "prod",
+      "mode": "streaming",
+      "risk": "medium",
+      "auth": "none",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "1a7b3747ec4c0d0412589dc5b57f5bde7b394573cdeba4ab203f1e65f67917c5",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "prod",
+      "mode": "streaming",
+      "risk": "medium",
+      "auth": "user",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "ff4c9bc6081e6830df2776b2749ace4557179ba8f63dba1d9b16560fc91a724c",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "prod",
+      "mode": "streaming",
+      "risk": "medium",
+      "auth": "admin",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "0e63d50d752448c54100853344bb631b46c4f05dfef4e45982dd0829ff649b7c",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "prod",
+      "mode": "streaming",
+      "risk": "high",
+      "auth": "none",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "53602591043309a659bf932462cdbb610cfd764841d58258354463d6cb3f785c",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "prod",
+      "mode": "streaming",
+      "risk": "high",
+      "auth": "user",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "3c10a2c466aa46269061660c7e0e6a7cd978d18b1186db1db79045eabe852c96",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "prod",
+      "mode": "streaming",
+      "risk": "high",
+      "auth": "admin",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "d8d44efcf5b735721c49102b45c0562f5ed0b868b3c95271415014c684ac5d79",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "staging",
+      "mode": "sync",
+      "risk": "low",
+      "auth": "none",
+      "decision": "reject"
+    },
+    "decision": "reject",
+    "proof": {
+      "hash": "13173da6f20025836574c35fcf80cfca9e5542463be3a499f43f4d22bd9cdc1e",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "staging",
+      "mode": "sync",
+      "risk": "low",
+      "auth": "user",
+      "decision": "reject"
+    },
+    "decision": "reject",
+    "proof": {
+      "hash": "223ca34bc401721b2213e9e9bbd7c86e8ce3d0e1471705b25dca167d9039ac73",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "staging",
+      "mode": "sync",
+      "risk": "low",
+      "auth": "admin",
+      "decision": "bypass"
+    },
+    "decision": "bypass",
+    "proof": {
+      "hash": "051f6a26a43bfeb315541b6fc4bcafbccbe32e10b4e285ec7edfe338f3db7e51",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "staging",
+      "mode": "sync",
+      "risk": "medium",
+      "auth": "none",
+      "decision": "reject"
+    },
+    "decision": "reject",
+    "proof": {
+      "hash": "3909349784f409185ced823a01916b70d0bfd4cb3b1d68086ec26f7079184428",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "staging",
+      "mode": "sync",
+      "risk": "medium",
+      "auth": "user",
+      "decision": "reject"
+    },
+    "decision": "reject",
+    "proof": {
+      "hash": "33267503a37c2e3f093fa078471afd1a926b1dc7d580034225d06375a6bac5c0",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "staging",
+      "mode": "sync",
+      "risk": "medium",
+      "auth": "admin",
+      "decision": "reject"
+    },
+    "decision": "reject",
+    "proof": {
+      "hash": "d7b197b2c2ac24fc78d7c46edc447ea95e5463b65a7cec4ec7e9f67fd6944035",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "staging",
+      "mode": "sync",
+      "risk": "high",
+      "auth": "none",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "68ad8b1eeee4a9a6aebe88f11e3e42b6fa5f8deb3cf4df19df6ee5f1a645f6a5",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "staging",
+      "mode": "sync",
+      "risk": "high",
+      "auth": "user",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "01b35042b6070b464723c403d67f661cf487775ec2aaf55b4324c81e3e58d705",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "staging",
+      "mode": "sync",
+      "risk": "high",
+      "auth": "admin",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "fe988036ba23aaa1b6f0cb6fe2b36bca884499118040146fc4a3232a0c9ff133",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "staging",
+      "mode": "streaming",
+      "risk": "low",
+      "auth": "none",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "9657d45bdff93d8159adc362217f76efd48deb7f38a44e86a06853ba6de2e08d",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "staging",
+      "mode": "streaming",
+      "risk": "low",
+      "auth": "user",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "7d15461cdbdf1f61487d1954d63c9b850489948483b8ac6b47ebfc14a59ddb42",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "staging",
+      "mode": "streaming",
+      "risk": "low",
+      "auth": "admin",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "6e28103d3ee8020eef9fadcba2c6ababc2f5bee57e7b38ff982b21652c651b1c",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "staging",
+      "mode": "streaming",
+      "risk": "medium",
+      "auth": "none",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "dc4661972702198d15d6a05c4e48e83df8858a9df5efb3864ad3161437c97f11",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "staging",
+      "mode": "streaming",
+      "risk": "medium",
+      "auth": "user",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "15378808fe4c28bfb7f8661300b7d0d7048ddebfc1b6a5582135c5bcf26f1a41",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "staging",
+      "mode": "streaming",
+      "risk": "medium",
+      "auth": "admin",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "a975e74f7c6b3d1669c8259367badd7e64bf276f49b8dcd7a1f4f2aabd2c9d8d",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "staging",
+      "mode": "streaming",
+      "risk": "high",
+      "auth": "none",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "3ec0284d5971eb054ec98709689cae4a35c69de58e07c21e17060f6314573e3d",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "staging",
+      "mode": "streaming",
+      "risk": "high",
+      "auth": "user",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "d2685391186d9c740161953edac6fcb8c81f7a414a34872acf2b71c259d70b14",
+      "invariantsPassed": true
+    }
+  },
+  {
+    "vector": {
+      "env": "staging",
+      "mode": "streaming",
+      "risk": "high",
+      "auth": "admin",
+      "decision": "model"
+    },
+    "decision": "model",
+    "proof": {
+      "hash": "820fbb1f6f6b8397c7550a83875af73dbccb2d3fad7c422a9687de27cd260e4c",
+      "invariantsPassed": true
+    }
+  }
+]
